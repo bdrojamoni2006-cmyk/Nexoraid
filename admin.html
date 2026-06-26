@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXORAID | Admin Command Center</title>
+    <!-- Google Fonts & CDN Utilities -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase Compat v9.23.0 CDNs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              orbitron: ['Orbitron', 'sans-serif'],
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+      body {
+        background: radial-gradient(circle at 0% 0%, #0c0032 0%, #190061 35%, #05001c 70%, #000000 100%);
+        min-height: 100vh;
+      }
+      .text-glow {
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.01);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.3);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.5);
+      }
+    </style>
+  </head>
+  <body class="text-white relative overflow-x-hidden pb-12">
+    <!-- Decorative Orbs -->
+    <div class="absolute w-[500px] h-[500px] rounded-full blur-[120px] bg-purple-600/10 -top-40 -left-40 pointer-events-none"></div>
+    <div class="absolute w-[600px] h-[600px] rounded-full blur-[140px] bg-blue-600/10 -bottom-45 -right-40 pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <!-- Header -->
+      <header class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8 pb-6 border-b border-white/10">
+        <div class="text-center sm:text-left">
+          <div class="flex items-center justify-center sm:justify-start gap-3">
+            <span class="inline-flex items-center justify-center p-2 bg-purple-600/20 border border-purple-500/30 rounded-xl">
+              <i data-lucide="shield-alert" class="w-6 h-6 text-purple-400 animate-pulse"></i>
+            </span>
+            <h1 class="text-3xl font-black tracking-[0.2em] font-orbitron text-glow uppercase">NEXORAID</h1>
+          </div>
+          <p class="text-blue-300/60 text-xs tracking-widest mt-1 uppercase">Root Control Command Deck</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="connection-status" class="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] uppercase tracking-widest text-amber-400 flex items-center gap-1.5 font-bold">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            Demo State
+          </div>
+          <a href="/" class="px-4 py-2 bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300 flex items-center gap-2">
+            <i data-lucide="log-out" class="w-3.5 h-3.5 text-rose-400"></i>
+            Lock Console
+          </a>
+        </div>
+      </header>
+
+      <!-- Stats Grid -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="glass-card p-5 rounded-2xl relative overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+          <div class="absolute top-0 right-0 w-20 h-20 bg-purple-500/5 rounded-full translate-x-8 -translate-y-8 blur-lg"></div>
+          <div class="flex justify-between items-start mb-3">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-300/60">Total Operators</span>
+            <span class="p-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400"><i data-lucide="users" class="w-4 h-4"></i></span>
+          </div>
+          <h3 id="stat-total-users" class="text-2xl font-black font-orbitron tracking-tight text-white">0</h3>
+          <p class="text-[9px] text-green-400 uppercase tracking-widest mt-1">● Database Connected</p>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl relative overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
+          <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full translate-x-8 -translate-y-8 blur-lg"></div>
+          <div class="flex justify-between items-start mb-3">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-300/60">Active Downlines</span>
+            <span class="p-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400"><i data-lucide="user-plus" class="w-4 h-4"></i></span>
+          </div>
+          <h3 id="stat-total-referrals" class="text-2xl font-black font-orbitron tracking-tight text-white">0</h3>
+          <p class="text-[9px] text-blue-300/50 uppercase tracking-widest mt-1">Growth Matrix Online</p>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+          <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full translate-x-8 -translate-y-8 blur-lg"></div>
+          <div class="flex justify-between items-start mb-3">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-300/60">Deposits pending</span>
+            <span class="p-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400"><i data-lucide="arrow-down-circle" class="w-4 h-4"></i></span>
+          </div>
+          <h3 id="stat-pending-deposits" class="text-2xl font-black font-orbitron tracking-tight text-emerald-400">0</h3>
+          <p class="text-[9px] text-emerald-400/60 uppercase tracking-widest mt-1">Awaiting verification</p>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl relative overflow-hidden group hover:border-rose-500/30 transition-all duration-300">
+          <div class="absolute top-0 right-0 w-20 h-20 bg-rose-500/5 rounded-full translate-x-8 -translate-y-8 blur-lg"></div>
+          <div class="flex justify-between items-start mb-3">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-300/60">Withdrawals pending</span>
+            <span class="p-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400"><i data-lucide="arrow-up-circle" class="w-4 h-4"></i></span>
+          </div>
+          <h3 id="stat-pending-withdrawals" class="text-2xl font-black font-orbitron tracking-tight text-rose-400">0</h3>
+          <p class="text-[9px] text-rose-400/60 uppercase tracking-widest mt-1">Payout settlements pending</p>
+        </div>
+      </section>
+
+      <!-- Secure Control Navigation Menu -->
+      <div class="flex bg-black/40 p-1.5 rounded-2xl border border-white/5 mb-6 overflow-x-auto select-none gap-2">
+        <button id="admin-users-btn" class="flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 bg-purple-600 text-white">
+          <i data-lucide="users-2" class="w-4 h-4"></i>
+          User Matrix
+        </button>
+        <button id="admin-deposits-btn" class="flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 text-white/50 hover:text-white">
+          <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+          Deposit Tickets
+        </button>
+        <button id="admin-withdrawals-btn" class="flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 text-white/50 hover:text-white">
+          <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+          Payout Tickets
+        </button>
+        <button id="admin-config-btn" class="flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 text-white/50 hover:text-white">
+          <i data-lucide="sliders" class="w-4 h-4"></i>
+          Global Config
+        </button>
+        <button id="admin-gifts-btn" class="flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 text-white/50 hover:text-white">
+          <i data-lucide="gift" class="w-4 h-4"></i>
+          Gift Generators
+        </button>
+      </div>
+
+      <!-- MAIN CONTROL CONTAINER -->
+      <main class="glass-card rounded-3xl overflow-hidden shadow-2xl">
+
+        <!-- 1. USER MATRIX SECTION -->
+        <div id="section-users" class="space-y-0">
+          <div class="p-6 border-b border-white/5 bg-white/[0.01] flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+            <div>
+              <h2 class="text-sm font-bold uppercase tracking-widest text-glow flex items-center gap-2 font-orbitron">
+                <i data-lucide="database" class="w-4 h-4 text-purple-400"></i>
+                Consolidated Operators Registry
+              </h2>
+              <p class="text-xs text-blue-300/50 mt-1">Click on any user row to unlock administrative balances, lockout state, and bank bindings.</p>
+            </div>
+
+            <!-- Search controls -->
+            <div class="flex flex-col sm:flex-row gap-3">
+              <div class="relative min-w-[280px]">
+                <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-300/40"></i>
+                <input 
+                  type="text" 
+                  id="search-input" 
+                  placeholder="Search by Name, Phone, Email..." 
+                  class="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-blue-300/30 focus:outline-none focus:border-purple-500/70"
+                >
+              </div>
+              <button 
+                onclick="fetchUsers()" 
+                class="px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-purple-400" id="refresh-icon"></i>
+                Sync Core
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr class="border-b border-white/10 bg-white/[0.02] text-blue-300/70 text-[9px] font-bold uppercase tracking-widest select-none">
+                  <th class="px-6 py-3.5">Name</th>
+                  <th class="px-6 py-3.5">Contact Node</th>
+                  <th class="px-6 py-3.5">Credentials (Pass)</th>
+                  <th class="px-6 py-3.5">Available Balance</th>
+                  <th class="px-6 py-3.5">Total Profit</th>
+                  <th class="px-6 py-3.5">Active VIP Nodes</th>
+                  <th class="px-6 py-3.5">Lock status</th>
+                  <th class="px-6 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="user-table-body" class="divide-y divide-white/5 text-xs">
+                <!-- Rendered Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. DEPOSIT TICKETS SECTION -->
+        <div id="section-deposits" class="hidden space-y-0">
+          <div class="p-6 border-b border-white/5 bg-white/[0.01]">
+            <h2 class="text-sm font-bold uppercase tracking-widest font-orbitron text-emerald-400 flex items-center gap-2">
+              <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
+              Incoming Deposit Verification Tickets
+            </h2>
+            <p class="text-xs text-blue-300/50 mt-1">Verify payment proofs and credit user accounts instantly with multi-level downline commission routing.</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr class="border-b border-white/10 bg-white/[0.02] text-blue-300/70 text-[9px] font-bold uppercase tracking-widest select-none">
+                  <th class="px-6 py-3.5">Timestamp</th>
+                  <th class="px-6 py-3.5">Operator</th>
+                  <th class="px-6 py-3.5">Asset Class</th>
+                  <th class="px-6 py-3.5">Proof (TXID / Number)</th>
+                  <th class="px-6 py-3.5">Amount (Submitted)</th>
+                  <th class="px-6 py-3.5">Status</th>
+                  <th class="px-6 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="deposit-tickets-body" class="divide-y divide-white/5 text-xs">
+                <!-- Rendered Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. PAYOUT TICKETS SECTION -->
+        <div id="section-withdrawals" class="hidden space-y-0">
+          <div class="p-6 border-b border-white/5 bg-white/[0.01]">
+            <h2 class="text-sm font-bold uppercase tracking-widest font-orbitron text-rose-400 flex items-center gap-2">
+              <i data-lucide="arrow-up-circle" class="w-4 h-4"></i>
+              Outgoing Payout Release Tickets
+            </h2>
+            <p class="text-xs text-blue-300/50 mt-1">Approve or refuse user cash withdrawals. Balance is deducted automatically on request.</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr class="border-b border-white/10 bg-white/[0.02] text-blue-300/70 text-[9px] font-bold uppercase tracking-widest select-none">
+                  <th class="px-6 py-3.5">Timestamp</th>
+                  <th class="px-6 py-3.5">Operator</th>
+                  <th class="px-6 py-3.5">Asset Class</th>
+                  <th class="px-6 py-3.5">Payout Address / Line</th>
+                  <th class="px-6 py-3.5">Amount Requested</th>
+                  <th class="px-6 py-3.5">Status</th>
+                  <th class="px-6 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="withdrawal-tickets-body" class="divide-y divide-white/5 text-xs">
+                <!-- Rendered Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 4. GLOBAL SYSTEM CONFIGURATION SECTION -->
+        <div id="section-config" class="hidden p-6 space-y-6">
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-widest font-orbitron text-glow flex items-center gap-2">
+              <i data-lucide="sliders" class="w-4 h-4 text-purple-400"></i>
+              Global Financial Configuration
+            </h2>
+            <p class="text-xs text-blue-300/50 mt-1">Override deposit target addresses, referral commission percentages, and package prices/yields globally.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Deposit Addresses -->
+            <div class="bg-white/[0.01] border border-white/5 p-5 rounded-2xl space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 font-orbitron">Deposit Target Gateways</h3>
+              
+              <div class="space-y-3">
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">USDT (TRC-20) Target Address</label>
+                  <input type="text" id="cfg-usdt-address" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">bKash Merchant/Personal Number</label>
+                  <input type="text" id="cfg-bkash-number" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">Nagad Merchant/Personal Number</label>
+                  <input type="text" id="cfg-nagad-number" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+              </div>
+            </div>
+
+            <!-- Referral commissions -->
+            <div class="bg-white/[0.01] border border-white/5 p-5 rounded-2xl space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 font-orbitron">Affiliate Downline Commissions</h3>
+              <p class="text-[10px] text-blue-300/40">Define what percentage of an approved downline deposit sponsors get instantly.</p>
+              
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">Level A (%)</label>
+                  <input type="number" id="cfg-commission-a" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">Level B (%)</label>
+                  <input type="number" id="cfg-commission-b" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">Level C (%)</label>
+                  <input type="number" id="cfg-commission-c" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Packages List -->
+          <div class="bg-white/[0.01] border border-white/5 p-5 rounded-2xl space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 font-orbitron">Yield Node packages Setup</h3>
+            
+            <div id="cfg-packages-container" class="space-y-4">
+              <!-- Dynamically rendered package editor lines -->
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <button onclick="saveGlobalConfigChanges()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer">
+              Commit Configuration Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. GIFT CODE GENERATOR SECTION -->
+        <div id="section-gifts" class="hidden p-6 space-y-6">
+          <div class="flex justify-between items-start">
+            <div>
+              <h2 class="text-sm font-bold uppercase tracking-widest font-orbitron text-glow flex items-center gap-2">
+                <i data-lucide="gift" class="w-4 h-4 text-purple-400"></i>
+                Reward Code Generation Vault
+              </h2>
+              <p class="text-xs text-blue-300/50 mt-1">Configure compensation code rewards, max redemption limits, and review usage statistics.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Creator Panel -->
+            <div class="bg-white/[0.01] border border-white/5 p-5 rounded-2xl space-y-4 lg:col-span-1">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 font-orbitron">Provision New Reward Code</h3>
+              
+              <div class="space-y-3">
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">Code Word</label>
+                  <input type="text" id="gift-new-code" placeholder="e.g. COMPENSATE100" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70 uppercase">
+                </div>
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">Credit Amount (USDT)</label>
+                  <input type="number" id="gift-new-amount" placeholder="e.g. 15.00" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+                <div>
+                  <label class="text-[10px] text-blue-300/40 uppercase block mb-1">Max redemption Uses</label>
+                  <input type="number" id="gift-new-uses" placeholder="e.g. 50" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70">
+                </div>
+                <button onclick="generateNewGiftCode()" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition-all cursor-pointer">
+                  Mint Reward Code
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Codes List -->
+            <div class="bg-white/[0.01] border border-white/5 p-5 rounded-2xl lg:col-span-2 space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400 font-orbitron">Active Reward Code Matrix</h3>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-white/10 text-[9px] text-blue-300/40 font-bold uppercase tracking-widest select-none">
+                      <th class="pb-2">Code Word</th>
+                      <th class="pb-2">Amount</th>
+                      <th class="pb-2">Uses</th>
+                      <th class="pb-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gift-codes-table" class="divide-y divide-white/5 font-mono text-xs text-blue-100">
+                    <!-- Rendered Dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consolidated registry counter footer -->
+        <div id="table-footer" class="p-4 bg-white/[0.01] border-t border-white/5 flex flex-col sm:flex-row justify-between items-center text-[9px] text-white/30 uppercase tracking-[0.2em] gap-2">
+          <span id="record-count">Records: 0</span>
+          <span>© 2026 NEXORAID CORP ● SECURED SYSTEMS INTEL</span>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- ADMIN USER DETAIL MODAL -->
+    <div id="user-edit-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn">
+      <div class="glass-card rounded-3xl w-full max-w-md p-6 relative space-y-5 animate-scaleIn">
+        <button onclick="closeUserEditModal()" class="absolute top-4 right-4 text-white/50 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+        
+        <div>
+          <h3 class="text-sm font-bold uppercase tracking-widest font-orbitron text-purple-300 flex items-center gap-1.5">
+            <i data-lucide="user-cog" class="w-4 h-4"></i>
+            User Controller Override
+          </h3>
+          <p class="text-[11px] text-blue-300/50 mt-1">Manually adjust wallet statistics, bind bank payout layouts, change registry passwords, or suspend access.</p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs space-y-1 select-none">
+            <p class="font-bold text-white text-sm" id="modal-user-name">Alex Vane</p>
+            <p class="text-[10px] text-blue-300/50" id="modal-user-phone">+880 1711223344</p>
+          </div>
+
+          <!-- Adjust Balance -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[9px] text-blue-300/40 uppercase block mb-1">Set Balance (USDT)</label>
+              <input type="number" id="modal-user-balance" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none">
+            </div>
+            <div>
+              <label class="text-[9px] text-blue-300/40 uppercase block mb-1">Total Yield (USDT)</label>
+              <input type="number" id="modal-user-income" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none">
+            </div>
+          </div>
+
+          <!-- Password Override -->
+          <div>
+            <label class="text-[9px] text-blue-300/40 uppercase block mb-1">Passphrase decryption Key</label>
+            <input type="text" id="modal-user-password" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none">
+          </div>
+
+          <!-- Bank card bindings -->
+          <div class="space-y-1 bg-black/20 p-2.5 rounded-xl border border-white/5">
+            <p class="text-[8px] text-purple-300 uppercase font-bold tracking-wider">Bound Payout coordinates</p>
+            <div class="space-y-1">
+              <input type="text" id="modal-user-usdt" placeholder="USDT TRC20" class="w-full bg-black/40 border border-white/5 rounded px-2 py-1 text-[10px] font-mono text-white focus:outline-none">
+              <input type="text" id="modal-user-bkash" placeholder="bKash Number" class="w-full bg-black/40 border border-white/5 rounded px-2 py-1 text-[10px] font-mono text-white focus:outline-none">
+              <input type="text" id="modal-user-nagad" placeholder="Nagad Number" class="w-full bg-black/40 border border-white/5 rounded px-2 py-1 text-[10px] font-mono text-white focus:outline-none">
+            </div>
+            <div class="flex items-center gap-1.5 mt-2">
+              <input type="checkbox" id="modal-user-banklocked" class="rounded border-white/10 bg-black/40 focus:ring-0">
+              <label for="modal-user-banklocked" class="text-[9px] text-blue-300/60 uppercase">Lock payout card inputs</label>
+            </div>
+          </div>
+
+          <!-- Lock status suspension -->
+          <div class="flex items-center gap-1.5 p-2 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+            <input type="checkbox" id="modal-user-locked" class="rounded border-rose-500/20 bg-rose-950/40 focus:ring-0 text-rose-600">
+            <div>
+              <label for="modal-user-locked" class="text-[9px] text-rose-300 font-bold uppercase block">Lock user Node connection</label>
+              <p class="text-[8px] text-rose-300/50 leading-none mt-0.5">Locks daily tasks, withdrawals, and recharge processes.</p>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="commitUserOverrides()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition-all cursor-pointer">
+          Apply Root Override Signals
+        </button>
+
+      </div>
+    </div>
+
+    <!-- SCRIPT APPLICATION -->
+    <script>
+      lucide.createIcons();
+
+      // 1. Core State
+      let db = null;
+      let isDemoMode = true;
+      let allUsers = [];
+
+      // default configurations
+      const defaultSystemConfig = {
+        usdtRechargeAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+        bkashRechargeNumber: '01711223344',
+        nagadRechargeNumber: '01911223344',
+        referCommissionLevelA: 10,
+        referCommissionLevelB: 3,
+        referCommissionLevelC: 2,
+        packages: [
+          { id: 'pkg1', name: 'VIP 1 Star', price: 10, dailyIncome: 1.0, validity: 30, taskName: 'Claim daily digital media optimization node' },
+          { id: 'pkg2', name: 'VIP 2 Star', price: 50, dailyIncome: 6.0, validity: 30, taskName: 'Process distributed quantum validation loop' },
+          { id: 'pkg3', name: 'VIP 3 Star', price: 150, dailyIncome: 20.0, validity: 30, taskName: 'Run neural model synthesis cycle' },
+          { id: 'pkg4', name: 'VIP 4 Star', price: 500, dailyIncome: 75.0, validity: 30, taskName: 'Synchronize master decentralized liquidity vector' }
+        ],
+        giftCodes: [
+          { code: 'WELCOME10', amount: 10, maxUses: 100, usesCount: 0, redeemedBy: [] },
+          { code: 'NEXORAID50', amount: 50, maxUses: 5, usesCount: 0, redeemedBy: [] }
+        ]
+      };
+
+      const SYSTEM_CONFIG_KEY = 'nexora_config';
+
+      function getSystemConfig() {
+        const stored = localStorage.getItem(SYSTEM_CONFIG_KEY);
+        if (!stored) {
+          localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify(defaultSystemConfig));
+          return defaultSystemConfig;
+        }
+        try {
+          return JSON.parse(stored);
+        } catch(e) {
+          return defaultSystemConfig;
+        }
+      }
+
+      function saveSystemConfig(config) {
+        localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify(config));
+      }
+
+      function getDemoUsers() {
+        const stored = localStorage.getItem('nexora_users');
+        return stored ? JSON.parse(stored) : [];
+      }
+
+      function saveDemoUsers(users) {
+        localStorage.setItem('nexora_users', JSON.stringify(users));
+      }
+
+      function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // --- ADMIN TAB SWITCHER ---
+      const adminTabs = ['users', 'deposits', 'withdrawals', 'config', 'gifts'];
+      adminTabs.forEach(t => {
+        const btn = document.getElementById(`admin-${t}-btn`);
+        if (btn) {
+          btn.addEventListener('click', () => switchAdminTab(t));
+        }
+      });
+
+      function switchAdminTab(targetTab) {
+        adminTabs.forEach(t => {
+          const btn = document.getElementById(`admin-${t}-btn`);
+          const section = document.getElementById(`section-${t}`);
+          if (btn && section) {
+            if (t === targetTab) {
+              btn.className = "flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 bg-purple-600 text-white";
+              section.classList.remove('hidden');
+            } else {
+              btn.className = "flex-1 py-3 text-xs font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 text-white/50 hover:text-white";
+              section.classList.add('hidden');
+            }
+          }
+        });
+
+        if (targetTab === 'users') fetchUsers();
+        if (targetTab === 'deposits') renderDepositTickets();
+        if (targetTab === 'withdrawals') renderWithdrawalTickets();
+        if (targetTab === 'config') renderConfigPanel();
+        if (targetTab === 'gifts') renderGiftsPanel();
+      }
+
+      // --- 1. USER MATRIX LOGIC ---
+      async function fetchUsers() {
+        const refreshIcon = document.getElementById('refresh-icon');
+        if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+        // Force reload from local storage
+        allUsers = getDemoUsers();
+
+        // Sanitize all users
+        allUsers = allUsers.map(u => {
+          if (u.balance === undefined) u.balance = 0;
+          if (u.totalIncome === undefined) u.totalIncome = 0;
+          if (!u.bankCard) u.bankCard = { usdtAddress: '', bkashNumber: '', nagadNumber: '', locked: false };
+          if (!u.activePackages) u.activePackages = [];
+          if (u.isLocked === undefined) u.isLocked = false;
+          if (!u.rechargeRecords) u.rechargeRecords = [];
+          if (!u.withdrawalRecords) u.withdrawalRecords = [];
+          if (!u.incomeRecords) u.incomeRecords = [];
+          return u;
+        });
+
+        // Save back sanitation
+        saveDemoUsers(allUsers);
+
+        renderRegistry(allUsers);
+
+        // Update overall stats counts
+        updateOverviewCounters();
+
+        if (refreshIcon) {
+          setTimeout(() => {
+            refreshIcon.classList.remove('animate-spin');
+          }, 600);
+        }
+      }
+
+      function renderRegistry(users) {
+        const tbody = document.getElementById('user-table-body');
+        const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+
+        const filtered = users.filter(u => {
+          if (!searchVal) return true;
+          return (
+            (u.name && u.name.toLowerCase().includes(searchVal)) ||
+            (u.phoneNumber && u.phoneNumber.toLowerCase().includes(searchVal)) ||
+            (u.email && u.email.toLowerCase().includes(searchVal))
+          );
+        });
+
+        document.getElementById('stat-total-users').innerText = users.length;
+        document.getElementById('record-count').innerText = `Records: ${filtered.length} / ${users.length}`;
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="px-6 py-12 text-center text-blue-300/40">
+                <p class="text-xs uppercase tracking-widest font-bold">No Operator Matches Found</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(u => {
+          const isLocked = u.isLocked;
+          const statusBadge = isLocked 
+            ? `<span class="px-2 py-0.5 bg-rose-600/10 border border-rose-500/20 text-rose-400 font-bold rounded">LOCKED</span>`
+            : `<span class="px-2 py-0.5 bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 font-bold rounded">ACTIVE</span>`;
+            
+          const vipText = u.activePackages && u.activePackages.length > 0 
+            ? `${u.activePackages.length} VIP Node(s)`
+            : 'FREE';
+
+          return `
+            <tr class="hover:bg-white/[0.01] transition-colors group">
+              <td class="px-6 py-3.5 font-bold text-white">${escapeHtml(u.name)}</td>
+              <td class="px-6 py-3.5 font-mono">${escapeHtml(u.countryCode)} ${escapeHtml(u.phoneNumber)}</td>
+              <td class="px-6 py-3.5 font-mono text-amber-400">${escapeHtml(u.password)}</td>
+              <td class="px-6 py-3.5 font-mono text-emerald-400 font-bold">${u.balance.toFixed(2)} USDT</td>
+              <td class="px-6 py-3.5 font-mono text-blue-300/80">${u.totalIncome.toFixed(2)} USDT</td>
+              <td class="px-6 py-3.5 font-bold text-purple-400 font-orbitron text-[11px]">${vipText}</td>
+              <td class="px-6 py-3.5">${statusBadge}</td>
+              <td class="px-6 py-3.5 text-right">
+                <button 
+                  onclick="openUserEditModal('${u.countryCode}', '${u.phoneNumber}')"
+                  class="px-2.5 py-1 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 rounded-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                >
+                  Adjust Core
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        lucide.createIcons();
+      }
+
+      // --- 2. DEPOSIT TICKETS LOGIC ---
+      function renderDepositTickets() {
+        const body = document.getElementById('deposit-tickets-body');
+        const users = getDemoUsers();
+        
+        let tickets = [];
+        users.forEach(u => {
+          if (u.rechargeRecords) {
+            u.rechargeRecords.forEach(rec => {
+              tickets.push({
+                userPhone: u.phoneNumber,
+                userCountry: u.countryCode,
+                userName: u.name,
+                ...rec
+              });
+            });
+          }
+        });
+
+        // Sort by pending first, then newest timestamp
+        tickets.sort((a, b) => {
+          if (a.status === 'pending' && b.status !== 'pending') return -1;
+          if (a.status !== 'pending' && b.status === 'pending') return 1;
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+
+        if (tickets.length === 0) {
+          body.innerHTML = `
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-blue-300/40">
+                <p class="text-xs uppercase tracking-widest font-bold">No Deposit Tickets Registered</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        body.innerHTML = tickets.map(t => {
+          const date = new Date(t.timestamp).toLocaleString();
+          let statusBadge = '';
+          if (t.status === 'pending') statusBadge = `<span class="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold rounded">PENDING</span>`;
+          if (t.status === 'approved') statusBadge = `<span class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded">APPROVED</span>`;
+          if (t.status === 'rejected') statusBadge = `<span class="px-2.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold rounded">REJECTED</span>`;
+
+          const showActions = t.status === 'pending';
+
+          return `
+            <tr class="hover:bg-white/[0.01]">
+              <td class="px-6 py-3.5 font-mono text-[10px] text-white/50">${date}</td>
+              <td class="px-6 py-3.5 font-semibold text-white">${escapeHtml(t.userName)} (${t.userPhone})</td>
+              <td class="px-6 py-3.5 font-bold uppercase text-purple-300">${t.type}</td>
+              <td class="px-6 py-3.5 font-mono text-xs select-all text-blue-200">${escapeHtml(t.txidOrNumber)}</td>
+              <td class="px-6 py-3.5 font-mono text-white font-bold">${t.amount.toFixed(2)}</td>
+              <td class="px-6 py-3.5">${statusBadge}</td>
+              <td class="px-6 py-3.5 text-right">
+                ${showActions ? `
+                  <div class="flex justify-end gap-1.5">
+                    <button 
+                      onclick="auditDepositTicket('${t.userCountry}', '${t.userPhone}', '${t.id}', 'approved')"
+                      class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase rounded cursor-pointer"
+                    >
+                      Approve
+                    </button>
+                    <button 
+                      onclick="auditDepositTicket('${t.userCountry}', '${t.userPhone}', '${t.id}', 'rejected')"
+                      class="px-2 py-1 bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold uppercase rounded cursor-pointer"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                ` : `<span class="text-white/20 text-xs font-semibold">-</span>`}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      window.auditDepositTicket = function(countryCode, phone, ticketId, action) {
+        const users = getDemoUsers();
+        const uIdx = users.findIndex(u => u.countryCode === countryCode && u.phoneNumber === phone);
+        if (uIdx === -1) return;
+
+        const user = users[uIdx];
+        const recIdx = user.rechargeRecords.findIndex(r => r.id === ticketId);
+        if (recIdx === -1) return;
+
+        const record = user.rechargeRecords[recIdx];
+        record.status = action;
+
+        if (action === 'approved') {
+          // Add funds to user available balance
+          // If recharge was in BDT, we convert BDT to USDT (120 BDT = 1 USDT)
+          let finalUSDTAmount = record.amount;
+          if (record.type === 'BKASH' || record.type === 'NAGAD') {
+            finalUSDTAmount = record.amount / 120;
+          }
+
+          user.balance = (user.balance || 0) + finalUSDTAmount;
+
+          // Push an income ledger record
+          if (!user.incomeRecords) user.incomeRecords = [];
+          user.incomeRecords.unshift({
+            id: 'dep_' + Date.now(),
+            type: 'deposit',
+            amount: finalUSDTAmount,
+            desc: `Deposit verification complete (+${finalUSDTAmount.toFixed(2)} USDT)`,
+            timestamp: new Date().toISOString()
+          });
+
+          // --- MULTI LEVEL DOWNLINE SPONSOR REWARDS ENGINE ---
+          // "the referral commission, if 1 member refers, he will get level A-10% B-3% C-2% if he recharges"
+          const config = getSystemConfig();
+          const rateA = config.referCommissionLevelA || 10;
+          const rateB = config.referCommissionLevelB || 3;
+          const rateC = config.referCommissionLevelC || 2;
+
+          // LEVEL A SPONSOR
+          if (user.referCode) {
+            const sponsorAIdx = users.findIndex(s => s.myReferCode === user.referCode);
+            if (sponsorAIdx !== -1) {
+              const sponsorA = users[sponsorAIdx];
+              const rewardA = finalUSDTAmount * (rateA / 100);
+              sponsorA.balance = (sponsorA.balance || 0) + rewardA;
+              
+              if (!sponsorA.incomeRecords) sponsorA.incomeRecords = [];
+              sponsorA.incomeRecords.unshift({
+                id: 'commission_a_' + Date.now(),
+                type: 'commission',
+                amount: rewardA,
+                desc: `Level A referral comm. from ${user.name}`,
+                timestamp: new Date().toISOString()
+              });
+
+              // LEVEL B SPONSOR
+              if (sponsorA.referCode) {
+                const sponsorBIdx = users.findIndex(s => s.myReferCode === sponsorA.referCode);
+                if (sponsorBIdx !== -1) {
+                  const sponsorB = users[sponsorBIdx];
+                  const rewardB = finalUSDTAmount * (rateB / 100);
+                  sponsorB.balance = (sponsorB.balance || 0) + rewardB;
+
+                  if (!sponsorB.incomeRecords) sponsorB.incomeRecords = [];
+                  sponsorB.incomeRecords.unshift({
+                    id: 'commission_b_' + Date.now(),
+                    type: 'commission',
+                    amount: rewardB,
+                    desc: `Level B referral comm. from ${user.name}`,
+                    timestamp: new Date().toISOString()
+                  });
+
+                  // LEVEL C SPONSOR
+                  if (sponsorB.referCode) {
+                    const sponsorCIdx = users.findIndex(s => s.myReferCode === sponsorB.referCode);
+                    if (sponsorCIdx !== -1) {
+                      const sponsorC = users[sponsorCIdx];
+                      const rewardC = finalUSDTAmount * (rateC / 100);
+                      sponsorC.balance = (sponsorC.balance || 0) + rewardC;
+
+                      if (!sponsorC.incomeRecords) sponsorC.incomeRecords = [];
+                      sponsorC.incomeRecords.unshift({
+                        id: 'commission_c_' + Date.now(),
+                        type: 'commission',
+                        amount: rewardC,
+                        desc: `Level C referral comm. from ${user.name}`,
+                        timestamp: new Date().toISOString()
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        saveDemoUsers(users);
+        renderDepositTickets();
+        updateOverviewCounters();
+        alert(`Deposit ticket successfully marked as ${action}!`);
+      };
+
+      // --- 3. WITHDRAWAL TICKETS LOGIC ---
+      function renderWithdrawalTickets() {
+        const body = document.getElementById('withdrawal-tickets-body');
+        const users = getDemoUsers();
+
+        let tickets = [];
+        users.forEach(u => {
+          if (u.withdrawalRecords) {
+            u.withdrawalRecords.forEach(w => {
+              tickets.push({
+                userPhone: u.phoneNumber,
+                userCountry: u.countryCode,
+                userName: u.name,
+                ...w
+              });
+            });
+          }
+        });
+
+        tickets.sort((a, b) => {
+          if (a.status === 'pending' && b.status !== 'pending') return -1;
+          if (a.status !== 'pending' && b.status === 'pending') return 1;
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+
+        if (tickets.length === 0) {
+          body.innerHTML = `
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center text-blue-300/40">
+                <p class="text-xs uppercase tracking-widest font-bold">No Payout Tickets Registered</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        body.innerHTML = tickets.map(t => {
+          const date = new Date(t.timestamp).toLocaleString();
+          let statusBadge = '';
+          if (t.status === 'pending') statusBadge = `<span class="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold rounded">PENDING</span>`;
+          if (t.status === 'approved') statusBadge = `<span class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold rounded">APPROVED / RELEASED</span>`;
+          if (t.status === 'rejected') statusBadge = `<span class="px-2.5 py-0.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold rounded">REFUSED & RESTORED</span>`;
+
+          const showActions = t.status === 'pending';
+
+          return `
+            <tr class="hover:bg-white/[0.01]">
+              <td class="px-6 py-3.5 font-mono text-[10px] text-white/50">${date}</td>
+              <td class="px-6 py-3.5 font-semibold text-white">${escapeHtml(t.userName)} (${t.userPhone})</td>
+              <td class="px-6 py-3.5 font-bold uppercase text-rose-300">${t.type}</td>
+              <td class="px-6 py-3.5 font-mono text-xs select-all text-rose-200">${escapeHtml(t.addressOrNumber)}</td>
+              <td class="px-6 py-3.5 font-mono text-white font-bold">${t.amount.toFixed(2)}</td>
+              <td class="px-6 py-3.5">${statusBadge}</td>
+              <td class="px-6 py-3.5 text-right">
+                ${showActions ? `
+                  <div class="flex justify-end gap-1.5">
+                    <button 
+                      onclick="auditWithdrawalTicket('${t.userCountry}', '${t.userPhone}', '${t.id}', 'approved')"
+                      class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase rounded cursor-pointer"
+                    >
+                      Approve Payout
+                    </button>
+                    <button 
+                      onclick="auditWithdrawalTicket('${t.userCountry}', '${t.userPhone}', '${t.id}', 'rejected')"
+                      class="px-2 py-1 bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold uppercase rounded cursor-pointer"
+                    >
+                      Reject Payout
+                    </button>
+                  </div>
+                ` : `<span class="text-white/20 text-xs font-semibold">-</span>`}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      window.auditWithdrawalTicket = function(countryCode, phone, ticketId, action) {
+        const users = getDemoUsers();
+        const uIdx = users.findIndex(u => u.countryCode === countryCode && u.phoneNumber === phone);
+        if (uIdx === -1) return;
+
+        const user = users[uIdx];
+        const recIdx = user.withdrawalRecords.findIndex(r => r.id === ticketId);
+        if (recIdx === -1) return;
+
+        const record = user.withdrawalRecords[recIdx];
+        record.status = action;
+
+        if (action === 'rejected') {
+          // Restore the reserved funds back to available balance!
+          user.balance = (user.balance || 0) + record.amount;
+          
+          if (!user.incomeRecords) user.incomeRecords = [];
+          user.incomeRecords.unshift({
+            id: 'wth_ref_' + Date.now(),
+            type: 'payout_refund',
+            amount: record.amount,
+            desc: `Payout request refused: funds restored (+${record.amount.toFixed(2)} USDT)`,
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        saveDemoUsers(users);
+        renderWithdrawalTickets();
+        updateOverviewCounters();
+        alert(`Payout ticket successfully marked as ${action}!`);
+      };
+
+      // --- 4. GLOBAL SYSTEM CONFIGURATION PANEL LOGIC ---
+      function renderConfigPanel() {
+        const config = getSystemConfig();
+        
+        document.getElementById('cfg-usdt-address').value = config.usdtRechargeAddress || '';
+        document.getElementById('cfg-bkash-number').value = config.bkashRechargeNumber || '';
+        document.getElementById('cfg-nagad-number').value = config.nagadRechargeNumber || '';
+        
+        document.getElementById('cfg-commission-a').value = config.referCommissionLevelA !== undefined ? config.referCommissionLevelA : 10;
+        document.getElementById('cfg-commission-b').value = config.referCommissionLevelB !== undefined ? config.referCommissionLevelB : 3;
+        document.getElementById('cfg-commission-c').value = config.referCommissionLevelC !== undefined ? config.referCommissionLevelC : 2;
+
+        const packagesBox = document.getElementById('cfg-packages-container');
+        packagesBox.innerHTML = config.packages.map((p, idx) => `
+          <div class="p-4 bg-black/40 border border-white/5 rounded-xl grid grid-cols-1 md:grid-cols-5 gap-3 items-center">
+            <div class="col-span-1">
+              <span class="text-[9px] text-purple-300 font-bold uppercase tracking-widest block mb-1">Node ID</span>
+              <span class="font-mono text-xs font-bold text-white block">${p.id}</span>
+            </div>
+            <div class="col-span-1">
+              <label class="text-[9px] text-blue-300/40 uppercase block mb-1">Package Name</label>
+              <input type="text" id="pkg-name-${idx}" value="${escapeHtml(p.name)}" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none">
+            </div>
+            <div class="col-span-1">
+              <label class="text-[9px] text-blue-300/40 uppercase block mb-1">Node Price (USDT)</label>
+              <input type="number" id="pkg-price-${idx}" value="${p.price}" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-mono focus:outline-none">
+            </div>
+            <div class="col-span-1">
+              <label class="text-[9px] text-blue-300/40 uppercase block mb-1">Daily Yield (USDT)</label>
+              <input type="number" step="0.1" id="pkg-yield-${idx}" value="${p.dailyIncome}" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-mono focus:outline-none">
+            </div>
+            <div class="col-span-1">
+              <label class="text-[9px] text-blue-300/40 uppercase block mb-1">Validity (Days)</label>
+              <input type="number" id="pkg-validity-${idx}" value="${p.validity}" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white font-mono focus:outline-none">
+            </div>
+          </div>
+        `).join('');
+      }
+
+      window.saveGlobalConfigChanges = function() {
+        const config = getSystemConfig();
+        
+        config.usdtRechargeAddress = document.getElementById('cfg-usdt-address').value.trim();
+        config.bkashRechargeNumber = document.getElementById('cfg-bkash-number').value.trim();
+        config.nagadRechargeNumber = document.getElementById('cfg-nagad-number').value.trim();
+        
+        config.referCommissionLevelA = parseInt(document.getElementById('cfg-commission-a').value) || 0;
+        config.referCommissionLevelB = parseInt(document.getElementById('cfg-commission-b').value) || 0;
+        config.referCommissionLevelC = parseInt(document.getElementById('cfg-commission-c').value) || 0;
+
+        // Save package modifications
+        config.packages.forEach((p, idx) => {
+          p.name = document.getElementById(`pkg-name-${idx}`).value.trim();
+          p.price = parseFloat(document.getElementById(`pkg-price-${idx}`).value) || 0;
+          p.dailyIncome = parseFloat(document.getElementById(`pkg-yield-${idx}`).value) || 0;
+          p.validity = parseInt(document.getElementById(`pkg-validity-${idx}`).value) || 30;
+        });
+
+        saveSystemConfig(config);
+        alert('Global systems configurations securely committed and saved successfully!');
+      };
+
+      // --- 5. GIFT CODE GENERATION LOGIC ---
+      function renderGiftsPanel() {
+        const config = getSystemConfig();
+        const body = document.getElementById('gift-codes-table');
+        
+        if (!config.giftCodes || config.giftCodes.length === 0) {
+          body.innerHTML = `
+            <tr>
+              <td colspan="4" class="pb-2 text-center text-blue-300/40">
+                No active reward codes minted
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        body.innerHTML = config.giftCodes.map((g, idx) => `
+          <tr>
+            <td class="py-2.5 font-bold text-white uppercase">${escapeHtml(g.code)}</td>
+            <td class="py-2.5 text-emerald-400 font-bold">${g.amount.toFixed(2)} USDT</td>
+            <td class="py-2.5 text-blue-300/80">${g.usesCount || 0} / ${g.maxUses} used</td>
+            <td class="py-2.5 text-right">
+              <button 
+                onclick="revokeGiftCode(${idx})"
+                class="px-2 py-0.5 bg-rose-600/20 hover:bg-rose-600 border border-rose-500/20 hover:border-rose-500 text-[10px] font-bold uppercase rounded transition-all cursor-pointer"
+              >
+                Revoke
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      window.generateNewGiftCode = function() {
+        const codeInput = document.getElementById('gift-new-code').value.trim().toUpperCase();
+        const amount = parseFloat(document.getElementById('gift-new-amount').value);
+        const maxUses = parseInt(document.getElementById('gift-new-uses').value);
+
+        if (!codeInput) {
+          alert('Minting failed: Code Word cannot be empty.');
+          return;
+        }
+        if (isNaN(amount) || amount <= 0) {
+          alert('Minting failed: Reward amount must be a positive number.');
+          return;
+        }
+        if (isNaN(maxUses) || maxUses <= 0) {
+          alert('Minting failed: Max redemptions must be greater than 0.');
+          return;
+        }
+
+        const config = getSystemConfig();
+        if (!config.giftCodes) config.giftCodes = [];
+
+        if (config.giftCodes.some(g => g.code === codeInput)) {
+          alert('Minting failed: Code sequence already exists.');
+          return;
+        }
+
+        config.giftCodes.push({
+          code: codeInput,
+          amount,
+          maxUses,
+          usesCount: 0,
+          redeemedBy: []
+        });
+
+        saveSystemConfig(config);
+        
+        // Reset inputs
+        document.getElementById('gift-new-code').value = '';
+        document.getElementById('gift-new-amount').value = '';
+        document.getElementById('gift-new-uses').value = '';
+
+        renderGiftsPanel();
+        alert('Promotional reward code minted successfully!');
+      };
+
+      window.revokeGiftCode = function(idx) {
+        if (!confirm('Are you sure you want to permanently destroy this promotional reward allocation code?')) return;
+        const config = getSystemConfig();
+        config.giftCodes.splice(idx, 1);
+        saveSystemConfig(config);
+        renderGiftsPanel();
+      };
+
+      // --- 6. OVERVIEW COUNTER METRIC WORK ---
+      function updateOverviewCounters() {
+        const users = getDemoUsers();
+        
+        let pendingD = 0;
+        let pendingW = 0;
+        let totalRefs = 0;
+
+        users.forEach(u => {
+          if (u.rechargeRecords) {
+            u.rechargeRecords.forEach(r => {
+              if (r.status === 'pending') pendingD++;
+            });
+          }
+          if (u.withdrawalRecords) {
+            u.withdrawalRecords.forEach(w => {
+              if (w.status === 'pending') pendingW++;
+            });
+          }
+          if (u.referCode) {
+            totalRefs++;
+          }
+        });
+
+        document.getElementById('stat-total-users').innerText = users.length;
+        document.getElementById('stat-total-referrals').innerText = totalRefs;
+        document.getElementById('stat-pending-deposits').innerText = pendingD;
+        document.getElementById('stat-pending-withdrawals').innerText = pendingW;
+      }
+
+      // --- 7. INDIVIDUAL USER OVERRIDES MODAL ENGINE ---
+      let activeEditUserRef = null;
+
+      window.openUserEditModal = function(countryCode, phone) {
+        const users = getDemoUsers();
+        const found = users.find(u => u.countryCode === countryCode && u.phoneNumber === phone);
+        if (!found) return;
+
+        activeEditUserRef = found;
+
+        document.getElementById('modal-user-name').innerText = found.name;
+        document.getElementById('modal-user-phone').innerText = `${found.countryCode} ${found.phoneNumber}`;
+        document.getElementById('modal-user-balance').value = found.balance !== undefined ? found.balance : 0;
+        document.getElementById('modal-user-income').value = found.totalIncome !== undefined ? found.totalIncome : 0;
+        document.getElementById('modal-user-password').value = found.password || '';
+
+        const card = found.bankCard || { usdtAddress: '', bkashNumber: '', nagadNumber: '', locked: false };
+        document.getElementById('modal-user-usdt').value = card.usdtAddress || '';
+        document.getElementById('modal-user-bkash').value = card.bkashNumber || '';
+        document.getElementById('modal-user-nagad').value = card.nagadNumber || '';
+        document.getElementById('modal-user-banklocked').checked = card.locked || false;
+
+        document.getElementById('modal-user-locked').checked = found.isLocked || false;
+
+        document.getElementById('user-edit-modal').classList.remove('hidden');
+      };
+
+      window.closeUserEditModal = function() {
+        document.getElementById('user-edit-modal').classList.add('hidden');
+        activeEditUserRef = null;
+      };
+
+      window.commitUserOverrides = function() {
+        if (!activeEditUserRef) return;
+
+        const users = getDemoUsers();
+        const idx = users.findIndex(u => u.countryCode === activeEditUserRef.countryCode && u.phoneNumber === activeEditUserRef.phoneNumber);
+        if (idx === -1) return;
+
+        const user = users[idx];
+
+        user.balance = parseFloat(document.getElementById('modal-user-balance').value) || 0;
+        user.totalIncome = parseFloat(document.getElementById('modal-user-income').value) || 0;
+        user.password = document.getElementById('modal-user-password').value.trim() || 'admin123';
+
+        user.bankCard = {
+          usdtAddress: document.getElementById('modal-user-usdt').value.trim(),
+          bkashNumber: document.getElementById('modal-user-bkash').value.trim(),
+          nagadNumber: document.getElementById('modal-user-nagad').value.trim(),
+          locked: document.getElementById('modal-user-banklocked').checked
+        };
+
+        user.isLocked = document.getElementById('modal-user-locked').checked;
+
+        saveDemoUsers(users);
+        closeUserEditModal();
+        fetchUsers();
+        alert('Administrative override overrides applied, synchronized, and saved perfectly!');
+      };
+
+      // --- INITIAL LOAD HANDLER ---
+      fetchUsers();
+    </script>
+  </body>
+</html>
