@@ -1,0 +1,2870 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXORAID | Secure Interface</title>
+    <!-- Google Fonts: Orbitron & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase Compat v9.23.0 CDNs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              orbitron: ['Orbitron', 'sans-serif'],
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+      body {
+        background: radial-gradient(circle at 50% 50%, #0c0032 0%, #15004d 40%, #200075 75%, #000000 100%);
+        min-height: 100vh;
+      }
+      .text-glow {
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 4px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.3);
+        border-radius: 4px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.5);
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes pulseSlow {
+        0%, 100% { opacity: 0.15; transform: scale(1); }
+        50% { opacity: 0.25; transform: scale(1.05); }
+      }
+      .animate-pulse-slow {
+        animation: pulseSlow 8s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body class="text-white relative flex flex-col items-center justify-center px-4 py-8 overflow-x-hidden font-sans">
+    
+    <!-- 3D Ambient Lighting Orbs -->
+    <div class="absolute w-[450px] h-[450px] rounded-full blur-[110px] bg-purple-600/15 -top-20 -left-10 pointer-events-none animate-pulse-slow"></div>
+    <div class="absolute w-[550px] h-[550px] rounded-full blur-[130px] bg-blue-600/10 -bottom-20 -right-10 pointer-events-none animate-pulse-slow" style="animation-delay: 3s;"></div>
+    
+    <!-- Top Telemetry Header Bar -->
+    <div class="w-full max-w-xl mb-4 z-20 flex justify-between items-center bg-white/[0.02] backdrop-blur-md border border-white/5 px-4 py-2 rounded-2xl text-[10px] uppercase tracking-[0.15em] text-blue-300/60">
+      <div class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping"></span>
+        <span>NEXORA SECURE TERMINAL</span>
+      </div>
+      <button 
+        id="config-modal-btn"
+        class="hover:text-purple-400 transition-colors flex items-center gap-1 cursor-pointer font-bold"
+      >
+        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-purple-400/80"></i>
+        <span>PORTAL NODE</span>
+      </button>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div class="w-full max-w-xl z-10 transition-all duration-500">
+      
+      <!-- Brand Header -->
+      <div id="brand-header" class="text-center mb-8 select-none">
+        <h1 
+          class="text-5xl md:text-6xl font-black tracking-[0.25em] text-white uppercase text-glow font-orbitron"
+        >
+          NEXORAID
+        </h1>
+        <p class="text-blue-300/50 text-[10px] md:text-xs tracking-[0.35em] mt-3 uppercase font-medium">
+          The Next Generation Portal interface
+        </p>
+      </div>
+
+      <!-- Global Notifications system -->
+      <div id="notification-box" class="hidden mb-6 p-4 rounded-2xl backdrop-blur-xl border flex items-start gap-3 shadow-lg transition-all duration-300 animate-fadeIn">
+        <div id="notification-icon-container">
+          <i id="notification-icon" data-lucide="alert-circle" class="w-5 h-5 shrink-0 mt-0.5"></i>
+        </div>
+        <div class="flex-1">
+          <p id="notification-title" class="text-xs font-semibold uppercase tracking-wider">System Coordinates</p>
+          <p id="notification-message" class="text-xs mt-1 leading-relaxed opacity-90"></p>
+        </div>
+        <button 
+          id="close-notification-btn"
+          class="text-white/40 hover:text-white transition-colors cursor-pointer"
+        >
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- AUTH PORTAL CARD -->
+      <div id="auth-portal-card" class="glass-card rounded-3xl shadow-2xl overflow-hidden shadow-black/60 relative group transition-all duration-500">
+        <!-- Top glass reflection overlay -->
+        <div class="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
+
+        <!-- Tab Controls -->
+        <div class="flex border-b border-white/10 select-none relative z-10">
+          <button 
+            id="login-tab-btn"
+            class="flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center bg-white/5 text-purple-400 border-b-2 border-purple-500"
+          >
+            Login Portal
+          </button>
+          <button 
+            id="register-tab-btn"
+            class="flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center border-l border-white/10 opacity-40 hover:opacity-100 text-white font-semibold"
+          >
+            Register Portal
+          </button>
+        </div>
+
+        <!-- Forms Viewport -->
+        <div class="p-6 md:p-8 space-y-6 relative z-10">
+          
+          <!-- LOGIN VIEW -->
+          <form id="login-form" class="space-y-4">
+            <!-- Phone Input -->
+            <div class="space-y-2">
+              <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                <i data-lucide="phone" class="w-3.5 h-3.5 text-purple-400"></i>
+                Secure Comm Coordinates (Phone)
+              </label>
+              <div class="flex gap-2.5">
+                <div class="relative min-w-[100px]">
+                  <i data-lucide="globe" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-300/40"></i>
+                  <select 
+                    id="login-country-code"
+                    class="w-full bg-black/50 border border-white/10 rounded-xl pl-9 pr-2 py-3 text-sm focus:outline-none focus:border-purple-500 text-white font-medium appearance-none cursor-pointer transition-colors"
+                  >
+                    <!-- Filled dynamically -->
+                  </select>
+                </div>
+                <input 
+                  type="tel" 
+                  id="login-phone"
+                  placeholder="000 000 000" 
+                  class="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500/80 focus:ring-1 focus:ring-purple-500/30 text-sm font-semibold tracking-wide text-white placeholder-white/20 transition-all duration-300"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Password Input -->
+            <div class="space-y-2">
+              <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                <i data-lucide="lock" class="w-3.5 h-3.5 text-purple-400"></i>
+                Operational Decryption Key (Password)
+              </label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="login-password"
+                  placeholder="••••••••••••" 
+                  class="w-full bg-black/50 border border-white/10 rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:border-purple-500/80 focus:ring-1 focus:ring-purple-500/30 text-sm tracking-widest text-white placeholder-white/20 transition-all duration-300"
+                  required
+                />
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/30">
+                  <i data-lucide="shield-check" class="w-4 h-4 text-purple-500/40"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submission Action -->
+            <button 
+              type="submit"
+              id="login-submit-btn"
+              class="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-500 hover:via-purple-500 hover:to-indigo-500 py-4 rounded-xl font-bold uppercase tracking-[0.2em] text-xs shadow-lg shadow-purple-900/40 mt-6 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer border border-white/10 text-white"
+            >
+              <i data-lucide="sparkles" class="w-4 h-4 text-purple-200 animate-pulse"></i>
+              <span>Initialize Session</span>
+            </button>
+
+          </form>
+
+          <!-- REGISTER VIEW -->
+          <form id="register-form" class="hidden space-y-4.5">
+            <!-- Operator Name -->
+            <div class="space-y-1.5">
+              <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                <i data-lucide="user" class="w-3.5 h-3.5 text-purple-400"></i>
+                Operator Full Name
+              </label>
+              <input 
+                type="text" 
+                id="register-name"
+                placeholder="Enter full name" 
+                class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-500/80 text-sm font-semibold text-white placeholder-white/20 transition-all duration-300"
+                required
+              />
+            </div>
+
+            <!-- Email & Phone Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-purple-400"></i>
+                  Digital Coordinate (Email)
+                </label>
+                <input 
+                  type="email" 
+                  id="register-email"
+                  placeholder="operator@nexora.io" 
+                  class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-500/80 text-sm font-semibold text-white placeholder-white/20 transition-all"
+                  required
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                  <i data-lucide="phone" class="w-3.5 h-3.5 text-purple-400"></i>
+                  Mobile Signal Coordinates
+                </label>
+                <div class="flex gap-2">
+                  <select 
+                    id="register-country-code"
+                    class="bg-black/50 border border-white/10 rounded-xl px-2 py-2.5 text-xs focus:outline-none focus:border-purple-500 text-white font-medium cursor-pointer"
+                  >
+                    <!-- Filled dynamically -->
+                  </select>
+                  <input 
+                    type="tel" 
+                    id="register-phone"
+                    placeholder="1711XXXXXX" 
+                    class="flex-1 bg-black/50 border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none focus:border-purple-500/80 text-sm font-semibold text-white placeholder-white/20 transition-all"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Passwords Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                  <i data-lucide="lock" class="w-3.5 h-3.5 text-purple-400"></i>
+                  Master Access Code (Pass)
+                </label>
+                <input 
+                  type="password" 
+                  id="register-password"
+                  placeholder="Min 6 characters" 
+                  class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-500/80 text-sm tracking-widest text-white placeholder-white/20 transition-all"
+                  required
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                  <i data-lucide="lock" class="w-3.5 h-3.5 text-purple-400"></i>
+                  Validate Access Code
+                </label>
+                <input 
+                  type="password" 
+                  id="register-confirm-password"
+                  placeholder="Retype password" 
+                  class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-500/80 text-sm tracking-widest text-white placeholder-white/20 transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Referral Node Section -->
+            <div class="space-y-1.5">
+              <label class="text-[10px] uppercase tracking-widest text-blue-300/70 font-semibold flex items-center gap-1.5">
+                <i data-lucide="award" class="w-3.5 h-3.5 text-purple-400"></i>
+                Affiliation Node (Referral Code)
+              </label>
+              <div class="flex gap-2">
+                <input 
+                  type="text" 
+                  id="register-refer-code"
+                  placeholder="e.g. NX99887 (Optional)" 
+                  class="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-500/80 text-sm font-mono text-purple-300 placeholder-white/10 tracking-wider transition-all"
+                />
+                <button 
+                  type="button"
+                  id="generate-refer-btn"
+                  class="px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 hover:border-purple-500/50 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/5 cursor-pointer flex items-center gap-1.5 text-white"
+                >
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i>
+                  New
+                </button>
+              </div>
+              <p id="refer-linked-msg" class="hidden text-[10px] text-blue-400 tracking-wider uppercase font-medium mt-1">
+                ✓ referral node linked successfully
+              </p>
+            </div>
+
+            <!-- Submit Registration -->
+            <button 
+              type="submit"
+              id="register-submit-btn"
+              class="w-full bg-white text-black hover:bg-neutral-200 py-3.5 rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-xl mt-6 active:scale-[0.98] transition-all duration-300 cursor-pointer border border-neutral-300 flex items-center justify-center gap-2"
+            >
+              <i data-lucide="user" class="w-4 h-4 text-black"></i>
+              <span>Establish Registry</span>
+            </button>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- SECURED OPERATOR DASHBOARD (Hidden Initially) -->
+      <div id="secured-dashboard-card" class="hidden glass-card rounded-3xl shadow-2xl p-6 md:p-8 space-y-6 relative group transition-all duration-500 animate-fadeIn">
+        <!-- Ambient indicator -->
+        <div class="absolute top-0 right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-xl pointer-events-none"></div>
+
+        <!-- Dashboard Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-white/10">
+          <div>
+            <span class="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-bold uppercase tracking-widest rounded-full inline-flex items-center gap-1 animate-pulse mb-2">
+              <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+              Registry verified
+            </span>
+            <h2 id="dash-operator-name" class="text-xl font-bold uppercase tracking-wider font-orbitron text-glow">
+              Authorized Operator
+            </h2>
+            <p id="dash-operator-coords" class="text-xs text-blue-300/60 font-mono">
+              +880 1711223344 ● ONLINE
+            </p>
+          </div>
+
+          <button 
+            id="logout-btn"
+            class="px-3 py-2 bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/20 hover:border-rose-500/30 rounded-xl text-xs font-semibold text-rose-300 uppercase tracking-wider transition-all duration-300 cursor-pointer flex items-center gap-1.5 self-stretch md:self-auto justify-center"
+          >
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            Exit Portal
+          </button>
+        </div>
+
+        <!-- Referral Token Module -->
+        <div class="p-4 bg-purple-600/10 border border-purple-500/20 rounded-2xl space-y-3">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-purple-300">
+              <i data-lucide="award" class="w-4 h-4 text-purple-400"></i>
+              Your Affiliate Token
+            </div>
+            <span id="dash-token-badge" class="font-mono text-xs font-black text-white px-2.5 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded-lg">
+              NXXXXX
+            </span>
+          </div>
+          <p class="text-[11px] text-blue-200/60 leading-relaxed">
+            Invite fellow network nodes to earn resource access. Share your dedicated invite hyperlink to register automatic affiliations.
+          </p>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="dash-referral-url"
+              readonly 
+              class="flex-1 bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-xs font-mono text-purple-200 truncate select-all focus:outline-none"
+            />
+            <button 
+              id="copy-referral-btn"
+              class="px-4 py-2 bg-white text-black hover:bg-neutral-200 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <i id="copy-btn-icon" data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span id="copy-btn-text">Copy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Telemetry Log Stream -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs font-semibold uppercase tracking-widest text-blue-300/60">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i>
+              Telemetry Log Stream
+            </div>
+            <button 
+              id="ping-matrix-btn"
+              class="hover:text-purple-400 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <i data-lucide="activity" class="w-3.5 h-3.5 text-purple-400 animate-pulse"></i>
+              <span>Ping Matrix</span>
+            </button>
+          </div>
+          
+          <div id="terminal-logs-container" class="bg-black/60 border border-white/5 p-4 rounded-2xl h-44 overflow-y-auto font-mono text-[10px] text-green-400/90 space-y-1.5 select-all scrollbar-thin">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Quick Stats Footer Inside Dashboard Card -->
+        <div class="grid grid-cols-2 gap-4 pt-2 select-none">
+          <div class="bg-white/[0.01] border border-white/5 p-3 rounded-xl">
+            <p class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold">DATABASE LINK</p>
+            <div class="flex items-center gap-1.5 mt-1">
+              <i data-lucide="database" class="w-3.5 h-3.5 text-purple-400"></i>
+              <p id="dash-db-status" class="text-xs font-bold text-white uppercase tracking-wider">
+                Demo Cache
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-white/[0.01] border border-white/5 p-3 rounded-xl">
+            <p class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold">SECURITY HASH</p>
+            <div class="flex items-center gap-1.5 mt-1">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <p class="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
+                AES-256 OK
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Outer Aesthetics Frame Footer -->
+      <div class="mt-8 flex flex-col sm:flex-row justify-between items-center text-[10px] uppercase tracking-[0.3em] text-white/30 gap-3 relative z-10 font-orbitron select-none">
+        <span>v1.0.4-BETA</span>
+        <span>● SECURE HANDSHAKE ACTIVE ●</span>
+        <span>© 2026 NEXORAID CORP</span>
+      </div>
+
+    </div>
+
+    <!-- PORTAL INFO MODAL -->
+    <div id="portal-config-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="bg-gradient-to-b from-[#160b3a] to-[#0a0320] border border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl relative animate-fadeIn">
+        <button 
+          id="close-config-modal-btn"
+          class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 pb-2 border-b border-white/5">
+            <span class="p-1.5 bg-purple-600/20 border border-purple-500/30 rounded-lg">
+              <i data-lucide="database" class="w-5 h-5 text-purple-400"></i>
+            </span>
+            <h3 class="text-sm font-bold uppercase tracking-widest font-orbitron">
+              Firebase Integration Info
+            </h3>
+          </div>
+
+          <p class="text-xs text-blue-200/80 leading-relaxed">
+            NEXORAID comes with fully production-ready Firebase integration. By default, it operates on a beautiful local cache mechanism because its <code class="bg-black/40 px-1 py-0.5 rounded text-purple-300">firebaseConfig</code> is set as a placeholder.
+          </p>
+
+          <div class="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1 text-xs">
+            <p class="font-bold text-white uppercase tracking-wider text-[10px]">How to connect your live DB:</p>
+            <ol class="list-decimal pl-4 space-y-1 text-blue-100/70 text-[11px] leading-relaxed">
+              <li>Navigate to <code class="bg-black/30 px-1 rounded font-mono">/src/firebase.ts</code> or edit inside <code class="bg-black/30 px-1 rounded font-mono">index.html</code>.</li>
+              <li>Populate the <code class="bg-black/30 px-1 rounded font-mono">firebaseConfig</code> credentials with your actual Firebase project settings.</li>
+              <li>The registry, login systems, and administrator database portal will immediately switch to live synchronization!</li>
+            </ol>
+          </div>
+
+          <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-200 text-[11px] leading-relaxed">
+            <strong>System Info:</strong> Operates using the compat v9.23.0 SDK module. Users are stored in the <code class="font-mono text-white">users</code> collection inside Firestore.
+          </div>
+
+          <button 
+            id="acknowledge-modal-btn"
+            class="w-full bg-purple-600 hover:bg-purple-500 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all cursor-pointer text-white"
+          >
+            Acknowledge and Continue
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CORE SCRIPT LOGIC -->
+    <script>
+      // Global App State
+      let activeTab = 'login'; // 'login' | 'register'
+      let currentUser = null;
+      let isSubmitting = false;
+      let terminalLogs = [
+        'SYSTEM INIT: NEXORAID Interface v1.0.4-Beta online.',
+        'SECURITY MODULE: AES-256 handshake protocols certified.',
+        'REGISTRY: Ready for secure operational session init.'
+      ];
+
+      // Country Codes List
+      const countryCodes = [
+        { code: '+880', country: 'BD' },
+        { code: '+1', country: 'US/CA' },
+        { code: '+44', country: 'UK' },
+        { code: '+91', country: 'IN' },
+        { code: '+86', country: 'CN' },
+        { code: '+81', country: 'JP' },
+        { code: '+49', country: 'DE' },
+        { code: '+33', country: 'FR' },
+        { code: '+61', country: 'AU' },
+        { code: '+971', country: 'AE' }
+      ];
+
+      // Static Mock Users for fallback LocalStorage cache (same as App.tsx/userService.ts)
+      const fallbackMocks = [
+        {
+          name: "Alex Vane",
+          email: "alex.vane@nexoraid.io",
+          countryCode: "+880",
+          phoneNumber: "1711223344",
+          password: "alex123",
+          referCode: "NX99887",
+          myReferCode: "NX55642",
+          timestamp: new Date(Date.now() - 3600000 * 2.5).toISOString()
+        },
+        {
+          name: "Sienna Kross",
+          email: "skross@nexoraid.io",
+          countryCode: "+1",
+          phoneNumber: "4155552671",
+          password: "sienna456",
+          referCode: "NX99887",
+          myReferCode: "NX30119",
+          timestamp: new Date(Date.now() - 3600000 * 12.8).toISOString()
+        },
+        {
+          name: "Kaelen Mercer",
+          email: "kaelen.m@nexoraid.io",
+          countryCode: "+44",
+          phoneNumber: "7911122233",
+          password: "kaelen789",
+          referCode: "NX10243",
+          myReferCode: "NX77884",
+          timestamp: new Date(Date.now() - 3600000 * 36).toISOString()
+        }
+      ];
+
+      const MOCK_USERS_KEY = 'nexora_users';
+
+      function getDemoUsers() {
+        const stored = localStorage.getItem(MOCK_USERS_KEY);
+        if (!stored) {
+          localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(fallbackMocks));
+          return fallbackMocks;
+        }
+        try {
+          return JSON.parse(stored);
+        } catch(e) {
+          return fallbackMocks;
+        }
+      }
+
+      function saveDemoUsers(users) {
+        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+      }
+
+      function generateRandomReferCode() {
+        const digits = Math.floor(10000 + Math.random() * 90000);
+        return `NX${digits}`;
+      }
+
+      // Initialize Firebase Config (Matches src/firebase.ts configuration)
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+
+      let auth = null;
+      let db = null;
+      let isDemoMode = false;
+
+      try {
+        if (
+          !firebaseConfig.apiKey ||
+          firebaseConfig.apiKey.includes("YOUR_") ||
+          firebaseConfig.apiKey === ""
+        ) {
+          isDemoMode = true;
+        } else {
+          firebase.initializeApp(firebaseConfig);
+          auth = firebase.auth();
+          db = firebase.firestore();
+        }
+      } catch (error) {
+        console.error("Firebase init failed, switching to demo mode:", error);
+        isDemoMode = true;
+      }
+
+      // DOM Elements Selection
+      const loginTabBtn = document.getElementById('login-tab-btn');
+      const registerTabBtn = document.getElementById('register-tab-btn');
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
+      const authPortalCard = document.getElementById('auth-portal-card');
+      const securedDashboardCard = document.getElementById('secured-dashboard-card');
+      const brandHeader = document.getElementById('brand-header');
+      
+      const loginCountrySelect = document.getElementById('login-country-code');
+      const registerCountrySelect = document.getElementById('register-country-code');
+      const generateReferBtn = document.getElementById('generate-refer-btn');
+      const registerReferInput = document.getElementById('register-refer-code');
+      const referLinkedMsg = document.getElementById('refer-linked-msg');
+
+      const notificationBox = document.getElementById('notification-box');
+      const notificationIcon = document.getElementById('notification-icon');
+      const notificationTitle = document.getElementById('notification-title');
+      const notificationMessage = document.getElementById('notification-message');
+      const closeNotificationBtn = document.getElementById('close-notification-btn');
+
+      const portalConfigModal = document.getElementById('portal-config-modal');
+      const configModalBtn = document.getElementById('config-modal-btn');
+      const closeConfigModalBtn = document.getElementById('close-config-modal-btn');
+      const acknowledgeModalBtn = document.getElementById('acknowledge-modal-btn');
+
+      // Fill Country Codes Dropdowns
+      function initCountryDropdowns() {
+        const optionsHtml = countryCodes.map(c => `
+          <option value="${c.code}" class="bg-[#120536] text-white">
+            ${c.code} (${c.country})
+          </option>
+        `).join('');
+        
+        loginCountrySelect.innerHTML = optionsHtml;
+        registerCountrySelect.innerHTML = optionsHtml;
+        
+        // Defaults
+        loginCountrySelect.value = '+880';
+        registerCountrySelect.value = '+880';
+      }
+
+      // Global Notification Trigger
+      function triggerNotification(type, message) {
+        notificationBox.classList.remove('hidden', 'bg-rose-500/10', 'border-rose-500/20', 'text-rose-300', 'shadow-rose-900/10', 'bg-emerald-500/10', 'border-emerald-500/20', 'text-emerald-300', 'shadow-emerald-900/10', 'bg-purple-500/10', 'border-purple-500/20', 'text-purple-300', 'shadow-purple-900/10');
+        
+        if (type === 'error') {
+          notificationBox.classList.add('bg-rose-500/10', 'border-rose-500/20', 'text-rose-300', 'shadow-rose-900/10');
+          notificationTitle.innerText = 'Operational Alert';
+          notificationIcon.setAttribute('data-lucide', 'alert-circle');
+        } else if (type === 'success') {
+          notificationBox.classList.add('bg-emerald-500/10', 'border-emerald-500/20', 'text-emerald-300', 'shadow-emerald-900/10');
+          notificationTitle.innerText = 'Handshake Success';
+          notificationIcon.setAttribute('data-lucide', 'shield-check');
+        } else {
+          notificationBox.classList.add('bg-purple-500/10', 'border-purple-500/20', 'text-purple-300', 'shadow-purple-900/10');
+          notificationTitle.innerText = 'System Coordinates';
+          notificationIcon.setAttribute('data-lucide', 'sparkles');
+        }
+        
+        notificationMessage.innerText = message;
+        notificationBox.classList.remove('hidden');
+        lucide.createIcons();
+
+        // Auto close non-errors
+        if (type !== 'error') {
+          setTimeout(() => {
+            notificationBox.classList.add('hidden');
+          }, 5000);
+        }
+      }
+
+      // Close notification clicked
+      closeNotificationBtn.addEventListener('click', () => {
+        notificationBox.classList.add('hidden');
+      });
+
+      // Tab Switching
+      function switchTab(tab) {
+        activeTab = tab;
+        notificationBox.classList.add('hidden');
+        
+        if (tab === 'login') {
+          loginTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center bg-white/5 text-purple-400 border-b-2 border-purple-500";
+          registerTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center border-l border-white/10 opacity-40 hover:opacity-100 text-white font-semibold";
+          loginForm.classList.remove('hidden');
+          registerForm.classList.add('hidden');
+        } else {
+          registerTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center bg-white/5 text-purple-400 border-b-2 border-purple-500 border-l border-white/10";
+          loginTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center opacity-40 hover:opacity-100 text-white font-semibold";
+          registerForm.classList.remove('hidden');
+          loginForm.classList.add('hidden');
+        }
+      }
+
+      loginTabBtn.addEventListener('click', () => switchTab('login'));
+      registerTabBtn.addEventListener('click', () => switchTab('register'));
+
+      // Generate random refer token inside Register form
+      generateReferBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const digits = '0123456789';
+        let code = 'NX';
+        for (let i = 0; i < 3; i++) {
+          code += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        for (let i = 0; i < 3; i++) {
+          code += digits.charAt(Math.floor(Math.random() * digits.length));
+        }
+        registerReferInput.value = code;
+        referLinkedMsg.classList.remove('hidden');
+        triggerNotification('success', `Created unique invitation node: ${code}`);
+      });
+
+      // Detect refer code inside URL search query (e.g. ?ref=NX99887)
+      function detectUrlReferCode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) {
+          registerReferInput.value = ref.toUpperCase();
+          referLinkedMsg.classList.remove('hidden');
+          switchTab('register');
+          triggerNotification('info', `Referral invite located: Code ${ref} loaded!`);
+        }
+      }
+
+      // Modal Open/Close Event Listeners
+      configModalBtn.addEventListener('click', () => portalConfigModal.classList.remove('hidden'));
+      closeConfigModalBtn.addEventListener('click', () => portalConfigModal.classList.add('hidden'));
+      acknowledgeModalBtn.addEventListener('click', () => portalConfigModal.classList.add('hidden'));
+
+      // Copy referral code link
+      const copyReferralBtn = document.getElementById('copy-referral-btn');
+      const copyBtnText = document.getElementById('copy-btn-text');
+      const copyBtnIcon = document.getElementById('copy-btn-icon');
+      const dashReferralUrlInput = document.getElementById('dash-referral-url');
+
+      copyReferralBtn.addEventListener('click', () => {
+        if (!currentUser) return;
+        const currentURL = window.location.origin + window.location.pathname;
+        const referralLink = `${currentURL}?ref=${currentUser.myReferCode}`;
+        
+        dashReferralUrlInput.value = referralLink;
+        dashReferralUrlInput.select();
+        
+        navigator.clipboard.writeText(referralLink).then(() => {
+          copyBtnText.innerText = "Copied";
+          copyBtnIcon.setAttribute('data-lucide', 'check');
+          copyBtnIcon.classList.add('text-emerald-600', 'stroke-[3]');
+          lucide.createIcons();
+          triggerNotification('success', 'Referral link coordinates copied to clipboard!');
+          
+          setTimeout(() => {
+            copyBtnText.innerText = "Copy";
+            copyBtnIcon.setAttribute('data-lucide', 'copy');
+            copyBtnIcon.classList.remove('text-emerald-600', 'stroke-[3]');
+            lucide.createIcons();
+          }, 3000);
+        });
+      });
+
+      // Terminal Logs Populate
+      const logsContainer = document.getElementById('terminal-logs-container');
+      function renderTerminalLogs() {
+        logsContainer.innerHTML = terminalLogs.map(log => `
+          <p class="leading-relaxed whitespace-pre-wrap">
+            <span class="text-purple-400/70 select-none mr-2">&gt;</span>${log}
+          </p>
+        `).join('');
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+      }
+
+      // Ping Matrix telemetric action
+      const pingMatrixBtn = document.getElementById('ping-matrix-btn');
+      pingMatrixBtn.addEventListener('click', () => {
+        const pings = [
+          `[PING] -> Core Nexus server responded in ${Math.floor(20 + Math.random() * 40)}ms`,
+          `[ENCRYPTION] -> Keys rotated successfully. Security score: 100%`,
+          `[REGISTRY] -> Database synchronization confirmed.`,
+          `[TELEMETRY] -> Data packets transferred: ${Math.floor(100 + Math.random() * 900)} KB`
+        ];
+        terminalLogs = [...terminalLogs, ...pings].slice(-12);
+        renderTerminalLogs();
+      });
+
+      // Logout handler
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn.addEventListener('click', () => {
+        currentUser = null;
+        securedDashboardCard.classList.add('hidden');
+        authPortalCard.classList.remove('hidden');
+        brandHeader.classList.remove('hidden');
+        switchTab('login');
+        triggerNotification('info', 'Secure session invalidated. Relog required.');
+      });
+
+      // Registration handling logic
+      const registerFormEl = document.getElementById('register-form');
+      registerFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        const name = document.getElementById('register-name').value.trim();
+        const email = document.getElementById('register-email').value.trim().toLowerCase();
+        const countryCode = registerCountrySelect.value;
+        const phoneRaw = document.getElementById('register-phone').value.trim();
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+        const referCode = registerReferInput.value.trim();
+
+        if (!name) return triggerNotification('error', 'Operational name parameter cannot be blank.');
+        if (!email || !email.includes('@')) return triggerNotification('error', 'Valid email credentials required for registration.');
+        if (!phoneRaw) return triggerNotification('error', 'Valid communication number coordinate is required.');
+        if (password.length < 6) return triggerNotification('error', 'Security passphrase must be at least 6 characters long.');
+        if (password !== confirmPassword) return triggerNotification('error', 'Security keys mismatch. Confirm password must match.');
+
+        const cleanPhone = phoneRaw.replace(/^0+/, ''); // trim leading zeros
+        const myReferCode = generateRandomReferCode();
+        const timestamp = new Date().toISOString();
+
+        const newUser = {
+          name,
+          email,
+          countryCode,
+          phoneNumber: cleanPhone,
+          password,
+          referCode: referCode || undefined,
+          myReferCode,
+          timestamp
+        };
+
+        isSubmitting = true;
+        const submitBtn = document.getElementById('register-submit-btn');
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin text-black"></i><span>Compiling Registry Matrix...</span>`;
+        lucide.createIcons();
+
+        try {
+          if (isDemoMode || !auth || !db) {
+            // Local fallback simulation
+            await new Promise(resolve => setTimeout(resolve, 800));
+            const users = getDemoUsers();
+
+            if (users.some(u => u.phoneNumber === cleanPhone && u.countryCode === countryCode)) {
+              throw new Error(`This phone number (${countryCode} ${cleanPhone}) is already registered.`);
+            }
+            if (users.some(u => u.email === newUser.email)) {
+              throw new Error("This email coordinates are already registered in the Nexora grid.");
+            }
+
+            users.unshift(newUser);
+            saveDemoUsers(users);
+            
+            currentUser = newUser;
+          } else {
+            // Real Firebase Database Registration
+            const phoneSnap = await db.collection('users')
+              .where('countryCode', '==', countryCode)
+              .where('phoneNumber', '==', cleanPhone)
+              .get();
+            
+            if (!phoneSnap.empty) {
+              throw new Error(`This phone number (${countryCode} ${cleanPhone}) is already registered.`);
+            }
+
+            const userCredential = await auth.createUserWithEmailAndPassword(newUser.email, password);
+            const firebaseUser = userCredential.user;
+
+            if (!firebaseUser) {
+              throw new Error("Initialization handshake failed. Please try again.");
+            }
+
+            await firebaseUser.updateProfile({ displayName: newUser.name });
+            await db.collection('users').doc(firebaseUser.uid).set(newUser);
+            
+            currentUser = newUser;
+          }
+
+          // Show Dashboard Screen
+          triggerNotification('success', `Handshake Complete! Welcome to NEXORAID, ${currentUser.name}.`);
+          showDashboard(currentUser);
+          
+          // Reset forms
+          registerFormEl.reset();
+          referLinkedMsg.classList.add('hidden');
+        } catch (error) {
+          triggerNotification('error', error.message || 'Transmission error. Please check your registry data.');
+        } finally {
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+          lucide.createIcons();
+        }
+      });
+
+      // Login submission handling logic
+      const loginFormEl = document.getElementById('login-form');
+      loginFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        const countryCode = loginCountrySelect.value;
+        const phoneRaw = document.getElementById('login-phone').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        if (!phoneRaw) return triggerNotification('error', 'Access number coordinates required to initialize session.');
+        if (!password) return triggerNotification('error', 'Passphrase required for decrypting access signature.');
+
+        const cleanPhone = phoneRaw.replace(/^0+/, '');
+        const combinedPhone = `${countryCode}${cleanPhone}`;
+
+        // 1. Check for Admin Login coordinates
+        if (
+          (combinedPhone === "+8800" || cleanPhone === "8800" || (countryCode === "+880" && cleanPhone === "0") || (countryCode === "+88" && cleanPhone === "00")) &&
+          password === "admin123"
+        ) {
+          triggerNotification('success', 'Root Administrator Signature Verified. Granting access to console...');
+          setTimeout(() => {
+            window.location.href = './admin.html';
+          }, 1200);
+          return;
+        }
+
+        isSubmitting = true;
+        const submitBtn = document.getElementById('login-submit-btn');
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin text-white"></i><span>Initializing Security Handshake...</span>`;
+        lucide.createIcons();
+
+        try {
+          if (isDemoMode || !auth || !db) {
+            // Local fallback simulation
+            await new Promise(resolve => setTimeout(resolve, 800));
+            const users = getDemoUsers();
+            const foundUser = users.find(u => u.countryCode === countryCode && u.phoneNumber === cleanPhone);
+
+            if (!foundUser) {
+              throw new Error("Secured login signature mismatch. Access coordinates not found.");
+            }
+
+            currentUser = foundUser;
+          } else {
+            // Real Firebase Database Login
+            const phoneSnap = await db.collection('users')
+              .where('countryCode', '==', countryCode)
+              .where('phoneNumber', '==', cleanPhone)
+              .get();
+
+            if (phoneSnap.empty) {
+              throw new Error("Secured login signature mismatch. Access coordinates not found.");
+            }
+
+            const userData = phoneSnap.docs[0].data();
+            await auth.signInWithEmailAndPassword(userData.email, password);
+            
+            currentUser = userData;
+          }
+
+          // Show Dashboard Screen
+          triggerNotification('success', `Welcome back, Operator ${currentUser.name}.`);
+          showDashboard(currentUser);
+          
+          // Reset login inputs
+          loginFormEl.reset();
+        } catch (error) {
+          triggerNotification('error', error.message || 'Authentication failed. Please verify credentials.');
+        } finally {
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+          lucide.createIcons();
+        }
+      });
+
+      // Switch view to dashboard
+      function showDashboard(user) {
+        authPortalCard.classList.add('hidden');
+        brandHeader.classList.add('hidden');
+        securedDashboardCard.classList.remove('hidden');
+
+        document.getElementById('dash-operator-name').innerText = user.name;
+        document.getElementById('dash-operator-coords').innerText = `${user.countryCode} ${user.phoneNumber} ● ONLINE`;
+        document.getElementById('dash-token-badge').innerText = user.myReferCode;
+
+        const currentURL = window.location.origin + window.location.pathname;
+        dashReferralUrlInput.value = `${currentURL}?ref=${user.myReferCode}`;
+
+        // Initialize Telemetry Logs
+        terminalLogs = [
+          `SESSION INIT: Operator ${user.name} online.`,
+          `CLEARANCE LEVEL: Operator (Standard)`,
+          `HANDSHAKE PROTOCOL: Success`,
+          `LOCAL SECTOR STABILITY: Optimal`,
+          `DATABASE LINKED: ${isDemoMode ? 'Local Cache LocalStorage' : 'Live Cloud Firestore'}`
+        ];
+        renderTerminalLogs();
+
+        // Update database indicator label
+        const dbStatusEl = document.getElementById('dash-db-status');
+        if (isDemoMode) {
+          dbStatusEl.innerText = 'Demo Cache';
+          dbStatusEl.className = 'text-xs font-bold text-white uppercase tracking-wider';
+        } else {
+          dbStatusEl.innerText = 'Live Firestore';
+          dbStatusEl.className = 'text-xs font-bold text-emerald-400 uppercase tracking-wider animate-pulse';
+        }
+      }
+
+      // Initialize App on load
+      initCountryDropdowns();
+      detectUrlReferCode();
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
+
+      <!-- SECURED DASHBOARD CARD (HIDDEN BY DEFAULT) -->
+      <div id="secured-dashboard-card" class="hidden glass-card rounded-3xl shadow-2xl overflow-hidden shadow-black/80 relative transition-all duration-500 animate-fadeIn">
+        <!-- Dashboard Top Header Bar -->
+        <div class="px-6 py-4 bg-white/[0.02] border-b border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center shadow-inner">
+              <i data-lucide="shield" class="w-5 h-5 text-purple-400 animate-pulse"></i>
+            </div>
+            <div>
+              <h2 id="dash-operator-name" class="text-sm font-bold uppercase tracking-widest font-orbitron text-glow text-white">---</h2>
+              <p id="dash-operator-phone" class="text-[9px] text-blue-300/40 uppercase tracking-widest font-semibold font-mono">NODE ID: ---</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <!-- Database Live/Demo Mode indicator -->
+            <div class="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 flex items-center gap-2 shrink-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="dash-db-status" class="text-[9px] font-bold text-blue-300/60 uppercase tracking-wider">Demo Cache</span>
+            </div>
+            <button 
+              id="logout-btn"
+              class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 transition-all text-xs font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+            >
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Logout</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Wallet Balance Telemetry Row -->
+        <div class="grid grid-cols-2 border-b border-white/10 divide-x divide-white/10 select-none relative z-10">
+          <div class="p-6 text-center bg-gradient-to-b from-white/[0.01] to-transparent">
+            <p class="text-[9px] uppercase tracking-widest text-blue-300/40 font-bold mb-1">Decentralized Asset Node (Balance)</p>
+            <h3 id="dash-balance-display" class="text-3xl font-black text-white font-orbitron tracking-wide text-glow">$0.00</h3>
+            <p class="text-[8px] font-mono text-emerald-400 font-bold tracking-widest uppercase mt-1">USDT Available</p>
+          </div>
+          <div class="p-6 text-center bg-gradient-to-b from-white/[0.01] to-transparent">
+            <p class="text-[9px] uppercase tracking-widest text-blue-300/40 font-bold mb-1">Harvested Node Commissions</p>
+            <h3 id="dash-income-display" class="text-3xl font-black text-purple-400 font-orbitron tracking-wide text-glow">$0.00</h3>
+            <p class="text-[8px] font-mono text-purple-400/80 font-bold tracking-widest uppercase mt-1">Total Yield</p>
+          </div>
+        </div>
+
+        <!-- Dashboard Internal Sub Navigation Tabs -->
+        <div class="flex border-b border-white/10 select-none bg-black/20 text-[10px] tracking-widest font-black uppercase overflow-x-auto scrollbar-thin relative z-10">
+          <button 
+            data-sub-tab="packages"
+            class="sub-tab-btn px-5 py-4 shrink-0 transition-all duration-300 text-purple-400 border-b-2 border-purple-500 bg-white/[0.02]"
+          >
+            Invest Panel
+          </button>
+          <button 
+            data-sub-tab="tasks"
+            class="sub-tab-btn px-5 py-4 shrink-0 transition-all duration-300 text-white/50 border-b-2 border-transparent hover:text-white"
+          >
+            Daily Tasks
+          </button>
+          <button 
+            data-sub-tab="team"
+            class="sub-tab-btn px-5 py-4 shrink-0 transition-all duration-300 text-white/50 border-b-2 border-transparent hover:text-white"
+          >
+            Comms Network
+          </button>
+          <button 
+            data-sub-tab="profile"
+            class="sub-tab-btn px-5 py-4 shrink-0 transition-all duration-300 text-white/50 border-b-2 border-transparent hover:text-white"
+          >
+            Financial Vault
+          </button>
+        </div>
+
+        <!-- Dashboard Scrollable Viewport -->
+        <div class="p-6 md:p-8 relative z-10">
+          
+          <!-- 1. PACKAGES LIST (INVEST PANEL) -->
+          <div id="tab-packages-content" class="space-y-6">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-sm font-bold uppercase tracking-widest font-orbitron text-purple-300 text-glow">
+                  Available Yield Nodes
+                </h3>
+                <p class="text-[10px] text-blue-300/50 uppercase mt-0.5 tracking-wider">Select and activate to initialize daily task mining cycles</p>
+              </div>
+            </div>
+
+            <div id="packages-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Dynamically populated package cards -->
+            </div>
+          </div>
+
+          <!-- 2. TASKS WORKSPACE -->
+          <div id="tab-tasks-content" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-sm font-bold uppercase tracking-widest font-orbitron text-purple-300 text-glow">
+                  Telemetry Operations (Tasks)
+                </h3>
+                <p class="text-[10px] text-blue-300/50 uppercase mt-0.5 tracking-wider">Process node queries to claim daily active yield dividends</p>
+              </div>
+            </div>
+
+            <div id="active-tasks-list" class="space-y-4">
+              <!-- Dynamically populated active tasks -->
+            </div>
+          </div>
+
+          <!-- 3. TEAM SYSTEM (COMMUNICATIONS NETWORK) -->
+          <div id="tab-team-content" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Referral Coordinate Links -->
+              <div class="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3 flex flex-col justify-between">
+                <div>
+                  <h4 class="text-xs font-bold uppercase tracking-widest text-glow flex items-center gap-1.5 font-orbitron text-purple-300">
+                    <i data-lucide="share-2" class="w-4 h-4 text-purple-400"></i>
+                    Network Anchor (Referral)
+                  </h4>
+                  <p class="text-[10px] text-blue-300/50 leading-relaxed mt-1">Deploy this vector coordinate key. When operators use it to join NEXORAID, they bind to your terminal matrix.</p>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 bg-black/50 border border-white/10 rounded-xl p-1.5 pl-3">
+                    <input 
+                      type="text" 
+                      id="dash-referral-url"
+                      readonly
+                      value="---"
+                      class="bg-transparent flex-1 focus:outline-none text-[11px] font-mono text-purple-200 select-all"
+                    />
+                    <button 
+                      id="copy-referral-btn"
+                      class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 cursor-pointer transition-colors text-white shrink-0"
+                    >
+                      <i id="copy-btn-icon" data-lucide="copy" class="w-3.5 h-3.5"></i>
+                      <span id="copy-btn-text">Copy</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Commission Matrix Rules -->
+              <div class="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-2">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-glow flex items-center gap-1.5 font-orbitron text-purple-300">
+                  <i data-lucide="info" class="w-4 h-4 text-purple-400"></i>
+                  Network Yield Commission Rates
+                </h4>
+                <div class="divide-y divide-white/5 text-[11px] font-mono">
+                  <div class="flex justify-between py-1.5">
+                    <span class="text-blue-300/60 uppercase">Tier Alpha (Direct Node)</span>
+                    <span id="comm-alpha-val" class="font-bold text-purple-400">10%</span>
+                  </div>
+                  <div class="flex justify-between py-1.5">
+                    <span class="text-blue-300/60 uppercase">Tier Beta (Secondary Node)</span>
+                    <span id="comm-beta-val" class="font-bold text-purple-400">3%</span>
+                  </div>
+                  <div class="flex justify-between py-1.5">
+                    <span class="text-blue-300/60 uppercase">Tier Gamma (Tertiary Node)</span>
+                    <span id="comm-gamma-val" class="font-bold text-purple-400">2%</span>
+                  </div>
+                </div>
+                <p class="text-[9px] text-blue-300/30 leading-relaxed mt-1">Rates apply immediately to network activations linked to your hierarchy tree.</p>
+              </div>
+            </div>
+
+            <!-- Team Hierarchy Selector Tabs -->
+            <div class="space-y-4">
+              <div class="flex bg-black/40 border border-white/10 rounded-xl p-1 select-none text-[9px] tracking-widest font-black uppercase">
+                <button id="level-a-tab" class="flex-1 py-2 rounded-lg bg-white/5 text-purple-400 cursor-pointer">
+                  Level A (10%) <span id="level-a-count" class="ml-1 bg-purple-500/20 px-1.5 py-0.2 rounded">0</span>
+                </button>
+                <button id="level-b-tab" class="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg text-white/40 hover:text-white transition-all cursor-pointer">
+                  Level B (3%) <span id="level-b-count" class="ml-1 bg-black/50 px-1.5 py-0.2 rounded">0</span>
+                </button>
+                <button id="level-c-tab" class="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg text-white/40 hover:text-white transition-all cursor-pointer">
+                  Level C (2%) <span id="level-c-count" class="ml-1 bg-black/50 px-1.5 py-0.2 rounded">0</span>
+                </button>
+              </div>
+
+              <!-- Levels List Container -->
+              <div class="bg-black/30 border border-white/5 p-4 rounded-2xl h-44 overflow-y-auto font-mono text-xs text-blue-300/80 space-y-2 scrollbar-thin">
+                <div id="team-members-list" class="space-y-2">
+                  <!-- Dynamically populated team members list -->
+                  <p class="text-center py-10 text-blue-300/30 text-[10px] uppercase tracking-widest">No nodes registered in this tier</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 4. PROFILE & FINANCIAL PORTAL TAB -->
+          <div id="tab-profile-content" class="hidden space-y-6">
+            <!-- Profile Info Header Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Set up Bank Card Vault -->
+              <div class="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-glow flex items-center gap-1.5 font-orbitron text-purple-300">
+                  <i data-lucide="credit-card" class="w-4 h-4 text-purple-400"></i>
+                  Locked Bank Card Vault
+                </h4>
+                <p class="text-[10px] text-blue-300/50 leading-relaxed">Securely bind your payout details. Once established, changing them requires verification. Withdrawals are processed to these auto-filled nodes.</p>
+                
+                <div class="space-y-2.5">
+                  <div>
+                    <label class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">USDT Wallet Address (TRC-20)</label>
+                    <input type="text" id="bank-usdt" placeholder="Enter USDT address e.g. T..." class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70" />
+                  </div>
+                  <div>
+                    <label class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">bKash Account Number</label>
+                    <input type="text" id="bank-bkash" placeholder="e.g. 017xxxxxxxx (Personal)" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70" />
+                  </div>
+                  <div>
+                    <label class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">Nagad Account Number</label>
+                    <input type="text" id="bank-nagad" placeholder="e.g. 018xxxxxxxx (Personal)" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70" />
+                  </div>
+                  <button 
+                    id="save-bank-btn"
+                    class="w-full bg-purple-600 hover:bg-purple-500 transition-colors py-2 rounded-xl text-[9px] font-black uppercase tracking-widest select-none cursor-pointer flex items-center justify-center gap-1 text-white"
+                  >
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    <span>Securely Lock Vault</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Ledger Panels (Deposit / Withdrawal form) -->
+              <div class="space-y-4">
+                <!-- RECHARGE ACTION CONTAINER -->
+                <div class="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
+                  <h4 class="text-xs font-bold uppercase tracking-widest text-glow flex items-center gap-1.5 font-orbitron text-purple-300">
+                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-purple-400"></i>
+                    Deposit Ledger
+                  </h4>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">Payment Method</label>
+                      <select id="recharge-type" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                        <option value="USDT" class="bg-[#120536]">USDT (TRC-20)</option>
+                        <option value="bKash" class="bg-[#120536]">bKash (BD)</option>
+                        <option value="Nagad" class="bg-[#120536]">Nagad (BD)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">Amount ($ / USDT)</label>
+                      <input type="number" id="recharge-amount" placeholder="Min $10" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70" />
+                    </div>
+                  </div>
+
+                  <!-- Recharge dynamic wallet info block -->
+                  <div class="bg-black/50 border border-white/5 p-3 rounded-xl space-y-1">
+                    <div class="flex justify-between items-center">
+                      <span id="recharge-method-label" class="text-[9px] uppercase tracking-widest text-blue-300/40 font-bold">Target USDT Address:</span>
+                      <button id="copy-recharge-target-btn" class="text-[9px] font-bold text-purple-400 hover:text-purple-300 cursor-pointer flex items-center gap-0.5">
+                        <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                      </button>
+                    </div>
+                    <p id="recharge-target-address" class="text-[10px] font-mono break-all text-white select-all">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</p>
+                    <p id="recharge-rate-disclaimer" class="hidden text-[8px] text-yellow-400/70 italic mt-0.5 font-sans">BDT conversion rate: 1 USDT = 120 BDT.</p>
+                  </div>
+
+                  <!-- Transaction Hash / Sender info input -->
+                  <div>
+                    <label id="tx-info-label" class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">USDT Blockchain Tx Hash (TXID)</label>
+                    <input type="text" id="recharge-txid" placeholder="Enter blockchain hash reference..." class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70" />
+                  </div>
+
+                  <button 
+                    id="submit-recharge-btn"
+                    class="w-full bg-purple-600 hover:bg-purple-500 transition-colors py-2 rounded-xl text-[9px] font-black uppercase tracking-widest select-none cursor-pointer flex items-center justify-center gap-1 text-white"
+                  >
+                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                    <span>Log Recharge Protocol</span>
+                  </button>
+                </div>
+
+                <!-- WITHDRAWAL ACTION CONTAINER -->
+                <div class="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
+                  <h4 class="text-xs font-bold uppercase tracking-widest text-glow flex items-center gap-1.5 font-orbitron text-purple-300">
+                    <i data-lucide="arrow-down-left" class="w-4 h-4 text-purple-400"></i>
+                    Withdrawal Ledger
+                  </h4>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">Method Target</label>
+                      <select id="withdraw-type" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                        <option value="USDT" class="bg-[#120536]">USDT (TRC-20)</option>
+                        <option value="bKash" class="bg-[#120536]">bKash (BD)</option>
+                        <option value="Nagad" class="bg-[#120536]">Nagad (BD)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="text-[9px] uppercase tracking-widest text-blue-300/40 font-semibold block mb-1">Amount ($ / USDT)</label>
+                      <input type="number" id="withdraw-amount" placeholder="Min $5" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70" />
+                    </div>
+                  </div>
+
+                  <p id="withdraw-fee-disclaimer" class="text-[9px] text-blue-300/40 font-mono">Withdrawal Fee: 5%. Calculated yield will route to your locked vault above.</p>
+
+                  <button 
+                    id="submit-withdraw-btn"
+                    class="w-full bg-rose-600/20 border border-rose-500/30 hover:bg-rose-600/30 transition-colors py-2 rounded-xl text-[9px] font-black uppercase tracking-widest select-none cursor-pointer flex items-center justify-center gap-1 text-rose-300"
+                  >
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <span>Initialize Withdrawal Handshake</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- REDEEM GIFT CODE ROW -->
+            <div class="bg-black/30 border border-white/5 p-4 rounded-2xl space-y-3">
+              <h4 class="text-xs font-bold uppercase tracking-widest text-glow flex items-center gap-1.5 font-orbitron text-purple-300">
+                <i data-lucide="gift" class="w-4 h-4 text-purple-400"></i>
+                Terminal Reward Node (Gift Code)
+              </h4>
+              <p class="text-[10px] text-blue-300/50 leading-relaxed">Redeem promo keys or platform bonuses directly to your core node balances. Free trials or admin event vouchers are computed here.</p>
+              <div class="flex gap-2">
+                <input type="text" id="gift-code-input" placeholder="Enter Reward Code Key..." class="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-purple-500/70 uppercase tracking-wider" />
+                <button 
+                  id="redeem-gift-btn"
+                  class="bg-purple-600 hover:bg-purple-500 transition-all px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 cursor-pointer text-white"
+                >
+                  Apply Key
+                </button>
+              </div>
+            </div>
+
+            <!-- PERSONAL LEDGER RECORDS TABS (Recharges / Withdrawals History) -->
+            <div class="space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-widest font-orbitron text-purple-300 flex items-center gap-1.5">
+                <i data-lucide="history" class="w-4 h-4 text-purple-400"></i>
+                Personal Transaction Logs
+              </h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Deposits history card -->
+                <div class="bg-black/20 border border-white/5 rounded-2xl p-4 space-y-3">
+                  <h4 class="text-[10px] uppercase tracking-widest text-blue-300/60 font-bold border-b border-white/5 pb-1.5 flex justify-between">
+                    <span>Recharge History</span>
+                    <span id="recharge-count-badge" class="bg-purple-500/20 text-purple-300 px-1.5 rounded">0</span>
+                  </h4>
+                  <div class="h-32 overflow-y-auto font-mono text-[10px] space-y-1.5 scrollbar-thin" id="profile-recharge-list">
+                    <!-- Loaded dynamically -->
+                    <p class="text-center py-8 text-blue-300/20 uppercase tracking-widest text-[8px]">No ledger logs</p>
+                  </div>
+                </div>
+
+                <!-- Withdrawals history card -->
+                <div class="bg-black/20 border border-white/5 rounded-2xl p-4 space-y-3">
+                  <h4 class="text-[10px] uppercase tracking-widest text-blue-300/60 font-bold border-b border-white/5 pb-1.5 flex justify-between">
+                    <span>Withdrawal History</span>
+                    <span id="withdrawal-count-badge" class="bg-purple-500/20 text-purple-300 px-1.5 rounded">0</span>
+                  </h4>
+                  <div class="h-32 overflow-y-auto font-mono text-[10px] space-y-1.5 scrollbar-thin" id="profile-withdrawal-list">
+                    <!-- Loaded dynamically -->
+                    <p class="text-center py-8 text-blue-300/20 uppercase tracking-widest text-[8px]">No ledger logs</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Terminal Output Matrix Widget -->
+        <div class="px-6 md:px-8 pb-6 relative z-10 select-none">
+          <div class="bg-black/60 border border-white/10 rounded-2xl overflow-hidden shadow-inner">
+            <!-- Terminal Header -->
+            <div class="bg-white/[0.03] px-4 py-2 border-b border-white/5 flex items-center justify-between text-[8px] font-mono tracking-widest uppercase text-purple-300/70">
+              <span class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-ping"></span>
+                Terminal Output Feed
+              </span>
+              <button 
+                id="ping-matrix-btn"
+                class="hover:text-white transition-colors cursor-pointer text-purple-400 font-bold"
+              >
+                [Ping Matrix]
+              </button>
+            </div>
+            <!-- Terminal Feed Content -->
+            <div 
+              id="terminal-logs-container"
+              class="p-4 h-24 overflow-y-auto text-[10px] font-mono text-purple-300/80 space-y-1 scrollbar-thin"
+            >
+              <!-- Filled dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Footer Badge -->
+        <div class="px-6 py-4 bg-white/[0.01] border-t border-white/5 flex items-center justify-between text-[9px] uppercase tracking-widest text-white/20 select-none relative z-10">
+          <div class="flex items-center gap-1">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-purple-500/40"></i>
+            <span>NEXORA CORE VERIFIER</span>
+          </div>
+          <div class="bg-white/[0.01] border border-white/5 p-2 rounded-xl">
+            <p class="text-[8px] uppercase tracking-widest text-blue-300/40 font-semibold">SECURITY HASH</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <i data-lucide="shield-check" class="w-3 h-3 text-emerald-400"></i>
+              <p class="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">
+                AES-256 OK
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Outer Aesthetics Frame Footer -->
+      <div class="mt-8 flex flex-col sm:flex-row justify-between items-center text-[10px] uppercase tracking-[0.3em] text-white/30 gap-3 relative z-10 font-orbitron select-none">
+        <span>v1.0.4-BETA</span>
+        <span>● SECURE HANDSHAKE ACTIVE ●</span>
+        <span>© 2026 NEXORAID CORP</span>
+      </div>
+
+    </div>
+
+    <!-- PORTAL INFO MODAL -->
+    <div id="portal-config-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="bg-gradient-to-b from-[#160b3a] to-[#0a0320] border border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl relative animate-fadeIn">
+        <button 
+          id="close-config-modal-btn"
+          class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 pb-2 border-b border-white/5">
+            <span class="p-1.5 bg-purple-600/20 border border-purple-500/30 rounded-lg">
+              <i data-lucide="database" class="w-5 h-5 text-purple-400"></i>
+            </span>
+            <h3 class="text-sm font-bold uppercase tracking-widest font-orbitron">
+              Firebase Integration Info
+            </h3>
+          </div>
+
+          <p class="text-xs text-blue-200/80 leading-relaxed">
+            NEXORAID comes with fully production-ready Firebase integration. By default, it operates on a beautiful local cache mechanism because its <code class="bg-black/40 px-1 py-0.5 rounded text-purple-300">firebaseConfig</code> is set as a placeholder.
+          </p>
+
+          <div class="p-3 bg-white/5 border border-white/10 rounded-xl space-y-1 text-xs">
+            <p class="font-bold text-white uppercase tracking-wider text-[10px]">How to connect your live DB:</p>
+            <ol class="list-decimal pl-4 space-y-1 text-blue-100/70 text-[11px] leading-relaxed">
+              <li>Navigate to <code class="bg-black/30 px-1 rounded font-mono">/src/firebase.ts</code> or edit inside <code class="bg-black/30 px-1 rounded font-mono">index.html</code>.</li>
+              <li>Populate the <code class="bg-black/30 px-1 rounded font-mono">firebaseConfig</code> credentials with your actual Firebase project settings.</li>
+              <li>The registry, login systems, and administrator database portal will immediately switch to live synchronization!</li>
+            </ol>
+          </div>
+
+          <div class="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-200 text-[11px] leading-relaxed">
+            <strong>System Info:</strong> Operates using the compat v9.23.0 SDK module. Users are stored in the <code class="font-mono text-white">users</code> collection inside Firestore.
+          </div>
+
+          <button 
+            id="acknowledge-modal-btn"
+            class="w-full bg-purple-600 hover:bg-purple-500 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all cursor-pointer text-white"
+          >
+            Acknowledge and Continue
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CORE SCRIPT LOGIC -->
+    <script>
+      // Global App State
+      let activeTab = 'login'; // 'login' | 'register'
+      let currentUser = null;
+      let isSubmitting = false;
+      let terminalLogs = [
+        'SYSTEM INIT: NEXORAID Interface v1.0.4-Beta online.',
+        'SECURITY MODULE: AES-256 handshake protocols certified.',
+        'REGISTRY: Ready for secure operational session init.'
+      ];
+
+      // Country Codes List
+      const countryCodes = [
+        { code: '+880', country: 'BD' },
+        { code: '+1', country: 'US/CA' },
+        { code: '+44', country: 'UK' },
+        { code: '+91', country: 'IN' },
+        { code: '+86', country: 'CN' },
+        { code: '+81', country: 'JP' },
+        { code: '+49', country: 'DE' },
+        { code: '+33', country: 'FR' },
+        { code: '+61', country: 'AU' },
+        { code: '+971', country: 'AE' }
+      ];
+
+      // Static Mock Users for fallback LocalStorage cache (same as App.tsx/userService.ts)
+      const fallbackMocks = [
+        {
+          name: "Alex Vane",
+          email: "alex.vane@nexoraid.io",
+          countryCode: "+880",
+          phoneNumber: "1711223344",
+          password: "alex123",
+          referCode: "NX99887",
+          myReferCode: "NX55642",
+          timestamp: new Date(Date.now() - 3600000 * 2.5).toISOString()
+        },
+        {
+          name: "Sienna Kross",
+          email: "skross@nexoraid.io",
+          countryCode: "+1",
+          phoneNumber: "4155552671",
+          password: "sienna456",
+          referCode: "NX99887",
+          myReferCode: "NX30119",
+          timestamp: new Date(Date.now() - 3600000 * 12.8).toISOString()
+        },
+        {
+          name: "Kaelen Mercer",
+          email: "kaelen.m@nexoraid.io",
+          countryCode: "+44",
+          phoneNumber: "7911122233",
+          password: "kaelen789",
+          referCode: "NX10243",
+          myReferCode: "NX77884",
+          timestamp: new Date(Date.now() - 3600000 * 36).toISOString()
+        }
+      ];
+
+      const MOCK_USERS_KEY = 'nexora_users';
+
+      function getDemoUsers() {
+        const stored = localStorage.getItem(MOCK_USERS_KEY);
+        if (!stored) {
+          localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(fallbackMocks));
+          return fallbackMocks;
+        }
+        try {
+          return JSON.parse(stored);
+        } catch(e) {
+          return fallbackMocks;
+        }
+      }
+
+      function saveDemoUsers(users) {
+        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+      }
+
+      function generateRandomReferCode() {
+        const digits = Math.floor(10000 + Math.random() * 90000);
+        return `NX${digits}`;
+      }
+
+      // Initialize Firebase Config (Matches src/firebase.ts configuration)
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+
+      let auth = null;
+      let db = null;
+      let isDemoMode = false;
+
+      try {
+        if (
+          !firebaseConfig.apiKey ||
+          firebaseConfig.apiKey.includes("YOUR_") ||
+          firebaseConfig.apiKey === ""
+        ) {
+          isDemoMode = true;
+        } else {
+          firebase.initializeApp(firebaseConfig);
+          auth = firebase.auth();
+          db = firebase.firestore();
+        }
+      } catch (error) {
+        console.error("Firebase init failed, switching to demo mode:", error);
+        isDemoMode = true;
+      }
+
+      // DOM Elements Selection (declared as null/let, populated safely on DOMContentLoaded)
+      let loginTabBtn, registerTabBtn, loginForm, registerForm, authPortalCard, securedDashboardCard, brandHeader;
+      let loginCountrySelect, registerCountrySelect, generateReferBtn, registerReferInput, referLinkedMsg;
+      let notificationBox, notificationIcon, notificationTitle, notificationMessage, closeNotificationBtn;
+      let portalConfigModal, configModalBtn, closeConfigModalBtn, acknowledgeModalBtn;
+
+      function initElements() {
+        loginTabBtn = document.getElementById('login-tab-btn');
+        registerTabBtn = document.getElementById('register-tab-btn');
+        loginForm = document.getElementById('login-form');
+        registerForm = document.getElementById('register-form');
+        authPortalCard = document.getElementById('auth-portal-card');
+        securedDashboardCard = document.getElementById('secured-dashboard-card');
+        brandHeader = document.getElementById('brand-header');
+        
+        loginCountrySelect = document.getElementById('login-country-code');
+        registerCountrySelect = document.getElementById('register-country-code');
+        generateReferBtn = document.getElementById('generate-refer-btn');
+        registerReferInput = document.getElementById('register-refer-code');
+        referLinkedMsg = document.getElementById('refer-linked-msg');
+
+        notificationBox = document.getElementById('notification-box');
+        notificationIcon = document.getElementById('notification-icon');
+        notificationTitle = document.getElementById('notification-title');
+        notificationMessage = document.getElementById('notification-message');
+        closeNotificationBtn = document.getElementById('close-notification-btn');
+
+        portalConfigModal = document.getElementById('portal-config-modal');
+        configModalBtn = document.getElementById('config-modal-btn');
+        closeConfigModalBtn = document.getElementById('close-config-modal-btn');
+        acknowledgeModalBtn = document.getElementById('acknowledge-modal-btn');
+      }
+
+      // Fill Country Codes Dropdowns
+      function initCountryDropdowns() {
+        if (!loginCountrySelect || !registerCountrySelect) return;
+        const optionsHtml = countryCodes.map(c => `
+          <option value="${c.code}" class="bg-[#120536] text-white">
+            ${c.code} (${c.country})
+          </option>
+        `).join('');
+        
+        loginCountrySelect.innerHTML = optionsHtml;
+        registerCountrySelect.innerHTML = optionsHtml;
+        
+        // Defaults
+        loginCountrySelect.value = '+880';
+        registerCountrySelect.value = '+880';
+      }
+
+      // Global Notification Trigger
+      function triggerNotification(type, message) {
+        notificationBox.classList.remove('hidden', 'bg-rose-500/10', 'border-rose-500/20', 'text-rose-300', 'shadow-rose-900/10', 'bg-emerald-500/10', 'border-emerald-500/20', 'text-emerald-300', 'shadow-emerald-900/10', 'bg-purple-500/10', 'border-purple-500/20', 'text-purple-300', 'shadow-purple-900/10');
+        
+        if (type === 'error') {
+          notificationBox.classList.add('bg-rose-500/10', 'border-rose-500/20', 'text-rose-300', 'shadow-rose-900/10');
+          notificationTitle.innerText = 'Operational Alert';
+          notificationIcon.setAttribute('data-lucide', 'alert-circle');
+        } else if (type === 'success') {
+          notificationBox.classList.add('bg-emerald-500/10', 'border-emerald-500/20', 'text-emerald-300', 'shadow-emerald-900/10');
+          notificationTitle.innerText = 'Handshake Success';
+          notificationIcon.setAttribute('data-lucide', 'shield-check');
+        } else {
+          notificationBox.classList.add('bg-purple-500/10', 'border-purple-500/20', 'text-purple-300', 'shadow-purple-900/10');
+          notificationTitle.innerText = 'System Coordinates';
+          notificationIcon.setAttribute('data-lucide', 'sparkles');
+        }
+        
+        notificationMessage.innerText = message;
+        notificationBox.classList.remove('hidden');
+        lucide.createIcons();
+
+        // Auto close non-errors
+        if (type !== 'error') {
+          setTimeout(() => {
+            notificationBox.classList.add('hidden');
+          }, 5000);
+        }
+      }
+
+      // Close notification clicked
+      closeNotificationBtn.addEventListener('click', () => {
+        notificationBox.classList.add('hidden');
+      });
+
+      // Tab Switching
+      function switchTab(tab) {
+        activeTab = tab;
+        notificationBox.classList.add('hidden');
+        
+        if (tab === 'login') {
+          loginTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center bg-white/5 text-purple-400 border-b-2 border-purple-500";
+          registerTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center border-l border-white/10 opacity-40 hover:opacity-100 text-white font-semibold";
+          loginForm.classList.remove('hidden');
+          registerForm.classList.add('hidden');
+        } else {
+          registerTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center bg-white/5 text-purple-400 border-b-2 border-purple-500 border-l border-white/10";
+          loginTabBtn.className = "flex-1 py-5 text-xs font-bold tracking-widest uppercase transition-all duration-300 text-center opacity-40 hover:opacity-100 text-white font-semibold";
+          registerForm.classList.remove('hidden');
+          loginForm.classList.add('hidden');
+        }
+      }
+
+      loginTabBtn.addEventListener('click', () => switchTab('login'));
+      registerTabBtn.addEventListener('click', () => switchTab('register'));
+
+      // Generate random refer token inside Register form
+      generateReferBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const digits = '0123456789';
+        let code = 'NX';
+        for (let i = 0; i < 3; i++) {
+          code += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        for (let i = 0; i < 3; i++) {
+          code += digits.charAt(Math.floor(Math.random() * digits.length));
+        }
+        registerReferInput.value = code;
+        referLinkedMsg.classList.remove('hidden');
+        triggerNotification('success', `Created unique invitation node: ${code}`);
+      });
+
+      // Detect refer code inside URL search query (e.g. ?ref=NX99887)
+      function detectUrlReferCode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) {
+          registerReferInput.value = ref.toUpperCase();
+          referLinkedMsg.classList.remove('hidden');
+          switchTab('register');
+          triggerNotification('info', `Referral invite located: Code ${ref} loaded!`);
+        }
+      }
+
+      // Modal Open/Close Event Listeners
+      configModalBtn.addEventListener('click', () => portalConfigModal.classList.remove('hidden'));
+      closeConfigModalBtn.addEventListener('click', () => portalConfigModal.classList.add('hidden'));
+      acknowledgeModalBtn.addEventListener('click', () => portalConfigModal.classList.add('hidden'));
+
+      // Copy referral code link
+      const copyReferralBtn = document.getElementById('copy-referral-btn');
+      const copyBtnText = document.getElementById('copy-btn-text');
+      const copyBtnIcon = document.getElementById('copy-btn-icon');
+      const dashReferralUrlInput = document.getElementById('dash-referral-url');
+
+      copyReferralBtn.addEventListener('click', () => {
+        if (!currentUser) return;
+        const currentURL = window.location.origin + window.location.pathname;
+        const referralLink = `${currentURL}?ref=${currentUser.myReferCode}`;
+        
+        dashReferralUrlInput.value = referralLink;
+        dashReferralUrlInput.select();
+        
+        navigator.clipboard.writeText(referralLink).then(() => {
+          copyBtnText.innerText = "Copied";
+          copyBtnIcon.setAttribute('data-lucide', 'check');
+          copyBtnIcon.classList.add('text-emerald-600', 'stroke-[3]');
+          lucide.createIcons();
+          triggerNotification('success', 'Referral link coordinates copied to clipboard!');
+          
+          setTimeout(() => {
+            copyBtnText.innerText = "Copy";
+            copyBtnIcon.setAttribute('data-lucide', 'copy');
+            copyBtnIcon.classList.remove('text-emerald-600', 'stroke-[3]');
+            lucide.createIcons();
+          }, 3000);
+        });
+      });
+
+      // Terminal Logs Populate
+      const logsContainer = document.getElementById('terminal-logs-container');
+      function renderTerminalLogs() {
+        logsContainer.innerHTML = terminalLogs.map(log => `
+          <p class="leading-relaxed whitespace-pre-wrap">
+            <span class="text-purple-400/70 select-none mr-2">&gt;</span>${log}
+          </p>
+        `).join('');
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+      }
+
+      // Ping Matrix telemetric action
+      const pingMatrixBtn = document.getElementById('ping-matrix-btn');
+      pingMatrixBtn.addEventListener('click', () => {
+        const pings = [
+          `[PING] -> Core Nexus server responded in ${Math.floor(20 + Math.random() * 40)}ms`,
+          `[ENCRYPTION] -> Keys rotated successfully. Security score: 100%`,
+          `[REGISTRY] -> Database synchronization confirmed.`,
+          `[TELEMETRY] -> Data packets transferred: ${Math.floor(100 + Math.random() * 900)} KB`
+        ];
+        terminalLogs = [...terminalLogs, ...pings].slice(-12);
+        renderTerminalLogs();
+      });
+
+      // Logout handler
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn.addEventListener('click', () => {
+        currentUser = null;
+        securedDashboardCard.classList.add('hidden');
+        authPortalCard.classList.remove('hidden');
+        brandHeader.classList.remove('hidden');
+        switchTab('login');
+        triggerNotification('info', 'Secure session invalidated. Relog required.');
+      });
+
+      // Registration handling logic
+      const registerFormEl = document.getElementById('register-form');
+      registerFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        const name = document.getElementById('register-name').value.trim();
+        const email = document.getElementById('register-email').value.trim().toLowerCase();
+        const countryCode = registerCountrySelect.value;
+        const phoneRaw = document.getElementById('register-phone').value.trim();
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+        const referCode = registerReferInput.value.trim();
+
+        if (!name) return triggerNotification('error', 'Operational name parameter cannot be blank.');
+        if (!email || !email.includes('@')) return triggerNotification('error', 'Valid email credentials required for registration.');
+        if (!phoneRaw) return triggerNotification('error', 'Valid communication number coordinate is required.');
+        if (password.length < 6) return triggerNotification('error', 'Security passphrase must be at least 6 characters long.');
+        if (password !== confirmPassword) return triggerNotification('error', 'Security keys mismatch. Confirm password must match.');
+
+        const cleanPhone = phoneRaw.replace(/^0+/, ''); // trim leading zeros
+        const myReferCode = generateRandomReferCode();
+        const timestamp = new Date().toISOString();
+
+        const newUser = {
+          name,
+          email,
+          countryCode,
+          phoneNumber: cleanPhone,
+          password,
+          referCode: referCode || "",
+          myReferCode,
+          timestamp,
+          balance: 0,
+          totalIncome: 0,
+          bankCard: { usdtAddress: '', bkashNumber: '', nagadNumber: '', locked: false },
+          activePackages: [],
+          isLocked: false,
+          rechargeRecords: [],
+          withdrawalRecords: [],
+          incomeRecords: []
+        };
+
+        isSubmitting = true;
+        const submitBtn = document.getElementById('register-submit-btn');
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin text-black"></i><span>Compiling Registry Matrix...</span>`;
+        lucide.createIcons();
+
+        try {
+          if (isDemoMode || !auth || !db) {
+            // Local fallback simulation
+            await new Promise(resolve => setTimeout(resolve, 800));
+            const users = getDemoUsers();
+
+            if (users.some(u => u.phoneNumber === cleanPhone && u.countryCode === countryCode)) {
+              throw new Error(`This phone number (${countryCode} ${cleanPhone}) is already registered.`);
+            }
+            if (users.some(u => u.email === newUser.email)) {
+              throw new Error("This email coordinates are already registered in the Nexora grid.");
+            }
+
+            users.unshift(newUser);
+            saveDemoUsers(users);
+            
+            currentUser = newUser;
+          } else {
+            // Real Firebase Database Registration
+            const phoneSnap = await db.collection('users')
+              .where('countryCode', '==', countryCode)
+              .where('phoneNumber', '==', cleanPhone)
+              .get();
+            
+            if (!phoneSnap.empty) {
+              throw new Error(`This phone number (${countryCode} ${cleanPhone}) is already registered.`);
+            }
+
+            const userCredential = await auth.createUserWithEmailAndPassword(newUser.email, password);
+            const firebaseUser = userCredential.user;
+
+            if (!firebaseUser) {
+              throw new Error("Initialization handshake failed. Please try again.");
+            }
+
+            await firebaseUser.updateProfile({ displayName: newUser.name });
+            await db.collection('users').doc(firebaseUser.uid).set(newUser);
+            
+            currentUser = newUser;
+          }
+
+          // Show Dashboard Screen
+          triggerNotification('success', `Handshake Complete! Welcome to NEXORAID, ${currentUser.name}.`);
+          showDashboard(currentUser);
+          
+          // Reset forms
+          registerFormEl.reset();
+          referLinkedMsg.classList.add('hidden');
+        } catch (error) {
+          triggerNotification('error', error.message || 'Transmission error. Please check your registry data.');
+        } finally {
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+          lucide.createIcons();
+        }
+      });
+
+      // Login submission handling logic
+      const loginFormEl = document.getElementById('login-form');
+      loginFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        const countryCode = loginCountrySelect.value;
+        const phoneRaw = document.getElementById('login-phone').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        if (!phoneRaw) return triggerNotification('error', 'Access number coordinates required to initialize session.');
+        if (!password) return triggerNotification('error', 'Passphrase required for decrypting access signature.');
+
+        const cleanPhone = phoneRaw.replace(/^0+/, '');
+        const combinedPhone = `${countryCode}${cleanPhone}`;
+
+        // 1. Check for Admin Login coordinates
+        if (
+          (combinedPhone === "+8800" || cleanPhone === "8800" || (countryCode === "+880" && cleanPhone === "0") || (countryCode === "+88" && cleanPhone === "00")) &&
+          password === "admin123"
+        ) {
+          triggerNotification('success', 'Root Administrator Signature Verified. Granting access to console...');
+          setTimeout(() => {
+            window.location.href = './admin.html';
+          }, 1200);
+          return;
+        }
+
+        isSubmitting = true;
+        const submitBtn = document.getElementById('login-submit-btn');
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin text-white"></i><span>Initializing Security Handshake...</span>`;
+        lucide.createIcons();
+
+        try {
+          if (isDemoMode || !auth || !db) {
+            // Local fallback simulation
+            await new Promise(resolve => setTimeout(resolve, 800));
+            const users = getDemoUsers();
+            const foundUser = users.find(u => u.countryCode === countryCode && u.phoneNumber === cleanPhone);
+
+            if (!foundUser) {
+              throw new Error("Secured login signature mismatch. Access coordinates not found.");
+            }
+
+            currentUser = foundUser;
+          } else {
+            // Real Firebase Database Login
+            const phoneSnap = await db.collection('users')
+              .where('countryCode', '==', countryCode)
+              .where('phoneNumber', '==', cleanPhone)
+              .get();
+
+            if (phoneSnap.empty) {
+              throw new Error("Secured login signature mismatch. Access coordinates not found.");
+            }
+
+            const userData = phoneSnap.docs[0].data();
+            await auth.signInWithEmailAndPassword(userData.email, password);
+            
+            currentUser = userData;
+          }
+
+          // Show Dashboard Screen
+          triggerNotification('success', `Welcome back, Operator ${currentUser.name}.`);
+          showDashboard(currentUser);
+          
+          // Reset login inputs
+          loginFormEl.reset();
+        } catch (error) {
+          triggerNotification('error', error.message || 'Authentication failed. Please verify credentials.');
+        } finally {
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+          lucide.createIcons();
+        }
+      });
+
+      // --- NEXORAID SYSTEM CONFIGURATION & STATE ENHANCEMENTS ---
+      const defaultSystemConfig = {
+        usdtRechargeAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+        bkashRechargeNumber: '01711223344',
+        nagadRechargeNumber: '01911223344',
+        referCommissionLevelA: 10,
+        referCommissionLevelB: 3,
+        referCommissionLevelC: 2,
+        packages: [
+          { id: 'pkg1', name: 'VIP 1 Star', price: 10, dailyIncome: 1.0, validity: 30, taskName: 'Claim daily digital media optimization node' },
+          { id: 'pkg2', name: 'VIP 2 Star', price: 50, dailyIncome: 6.0, validity: 30, taskName: 'Process distributed quantum validation loop' },
+          { id: 'pkg3', name: 'VIP 3 Star', price: 150, dailyIncome: 20.0, validity: 30, taskName: 'Run neural model synthesis cycle' },
+          { id: 'pkg4', name: 'VIP 4 Star', price: 500, dailyIncome: 75.0, validity: 30, taskName: 'Synchronize master decentralized liquidity vector' }
+        ],
+        giftCodes: [
+          { code: 'WELCOME10', amount: 10, maxUses: 100, usesCount: 0, redeemedBy: [] },
+          { code: 'NEXORAID50', amount: 50, maxUses: 5, usesCount: 0, redeemedBy: [] }
+        ]
+      };
+
+      const SYSTEM_CONFIG_KEY = 'nexora_config';
+
+      function getSystemConfig() {
+        const stored = localStorage.getItem(SYSTEM_CONFIG_KEY);
+        if (!stored) {
+          localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify(defaultSystemConfig));
+          return defaultSystemConfig;
+        }
+        try {
+          return JSON.parse(stored);
+        } catch(e) {
+          return defaultSystemConfig;
+        }
+      }
+
+      function saveSystemConfig(config) {
+        localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify(config));
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // Render Available Packages dynamically in the Invest tab
+      function renderPackagesList() {
+        const config = getSystemConfig();
+        const container = document.getElementById('packages-list');
+        if (!container) return;
+
+        container.innerHTML = config.packages.map(pkg => {
+          return `
+            <div class="bg-black/35 border border-white/5 rounded-2xl p-5 hover:border-purple-500/20 transition-all flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex justify-between items-start">
+                  <h4 class="text-xs font-black uppercase tracking-widest text-glow font-orbitron text-purple-300">
+                    ${escapeHtml(pkg.name)}
+                  </h4>
+                  <span class="px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded text-[9px] font-mono font-bold text-purple-400">
+                    Validity: ${pkg.validity} days
+                  </span>
+                </div>
+                <div class="py-2">
+                  <p class="text-3xl font-black font-orbitron text-white tracking-wide">$${pkg.price}</p>
+                  <p class="text-[9px] uppercase tracking-widest text-blue-300/40 font-bold mt-1">Activation Price</p>
+                </div>
+                <div class="space-y-1 bg-white/[0.01] border border-white/5 p-3 rounded-xl text-[11px] font-mono text-blue-200/80">
+                  <div class="flex justify-between">
+                    <span class="text-blue-300/40 uppercase text-[9px]">Daily yield</span>
+                    <span class="text-emerald-400 font-bold">+${pkg.dailyIncome} USDT</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-blue-300/40 uppercase text-[9px]">Total value</span>
+                    <span class="text-purple-300 font-bold">$${(pkg.dailyIncome * pkg.validity).toFixed(0)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onclick="buyPackage('${pkg.id}')"
+                class="w-full mt-4 bg-purple-600 hover:bg-purple-500 transition-all py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest select-none cursor-pointer text-white"
+              >
+                Activate Node
+              </button>
+            </div>
+          `;
+        }).join('');
+        lucide.createIcons();
+      }
+
+      // Render Active Packages for completing daily task queries
+      function renderActivePackagesTasks() {
+        const config = getSystemConfig();
+        const list = document.getElementById('active-tasks-list');
+        if (!list) return;
+
+        if (!currentUser || !currentUser.activePackages || currentUser.activePackages.length === 0) {
+          list.innerHTML = `
+            <div class="text-center py-12 bg-black/20 border border-white/5 rounded-2xl">
+              <i data-lucide="inbox" class="w-8 h-8 text-blue-300/20 mx-auto mb-2"></i>
+              <p class="text-blue-300/30 text-[10px] uppercase tracking-widest font-bold">No active yield nodes linked</p>
+              <button 
+                onclick="switchSubTab('packages')"
+                class="mt-3 px-4 py-1.5 bg-purple-600/20 border border-purple-500/30 hover:bg-purple-600/30 text-purple-300 text-[9px] font-bold uppercase tracking-widest rounded-lg cursor-pointer transition-colors"
+              >
+                Link Active Node
+              </button>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        list.innerHTML = currentUser.activePackages.map((ap, idx) => {
+          const pkgInfo = config.packages.find(p => p.id === ap.packageId) || ap;
+          const alreadyDone = ap.lastTaskCompleted === todayStr;
+          
+          return `
+            <div class="bg-black/40 border border-white/5 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-purple-500/20 transition-all">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.2 bg-purple-500/10 border border-purple-500/20 text-[8px] font-bold text-purple-400 rounded">
+                    ${escapeHtml(ap.name)}
+                  </span>
+                  <span class="text-[10px] font-mono text-blue-300/50">Purchased: ${new Date(ap.purchasedAt).toLocaleDateString()}</span>
+                </div>
+                <h4 class="text-sm font-bold text-white uppercase tracking-wider">${escapeHtml(pkgInfo.taskName || 'Complete visual telemetry calibration')}</h4>
+                <p class="text-[10px] text-emerald-400 font-bold font-mono">Daily reward: +${ap.dailyIncome} USDT</p>
+              </div>
+
+              <button 
+                id="task-btn-${idx}"
+                onclick="completeTask(${idx})"
+                ${alreadyDone ? 'disabled' : ''}
+                class="px-5 py-2 rounded-xl font-bold uppercase tracking-widest text-[9px] shrink-0 cursor-pointer transition-all ${
+                  alreadyDone 
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white'
+                }"
+              >
+                ${alreadyDone ? 'Claimed Today' : 'Claim Daily Yield'}
+              </button>
+            </div>
+          `;
+        }).join('');
+        lucide.createIcons();
+      }
+      window.completeTask = function(idx) {
+        if (currentUser.isLocked) {
+          triggerNotification('error', 'Operational lockout active. Tasks disabled.');
+          return;
+        }
+        
+        const ap = currentUser.activePackages[idx];
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (ap.lastTaskCompleted === todayStr) {
+          triggerNotification('error', 'Task yield already harvested for this node today.');
+          return;
+        }
+        
+        const btn = document.getElementById(`task-btn-${idx}`);
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin mr-1"></i>Evaluating Node...`;
+        lucide.createIcons();
+
+        setTimeout(async () => {
+          try {
+            ap.lastTaskCompleted = todayStr;
+            currentUser.balance = parseFloat((currentUser.balance + ap.dailyIncome).toFixed(2));
+            currentUser.totalIncome = parseFloat((currentUser.totalIncome + ap.dailyIncome).toFixed(2));
+
+            // Log ledger record of income
+            currentUser.incomeRecords = currentUser.incomeRecords || [];
+            currentUser.incomeRecords.unshift({
+              amount: ap.dailyIncome,
+              packageName: ap.name,
+              timestamp: new Date().toISOString()
+            });
+
+            // Write updates
+            await syncUserData(currentUser);
+
+            triggerNotification('success', `Yield mining protocol validated! +${ap.dailyIncome} USDT routed to balance.`);
+            
+            terminalLogs.push(`TELEMETRY: Node query solved for ${ap.name}. Received ${ap.dailyIncome} USDT.`);
+            renderTerminalLogs();
+            
+            updateDashboardBalanceDisplays();
+            renderActivePackagesTasks();
+          } catch(e) {
+            triggerNotification('error', 'Sync mismatch error.');
+            btn.disabled = false;
+            btn.innerText = 'Claim Daily Yield';
+          }
+        }, 1200);
+      };
+
+      // Buying / Activating a VIP Package
+      window.buyPackage = async function(pkgId) {
+        if (!currentUser) return;
+        if (currentUser.isLocked) {
+          return triggerNotification('error', 'Operator terminal locked out. Activations suspended.');
+        }
+
+        const config = getSystemConfig();
+        const pkg = config.packages.find(p => p.id === pkgId);
+        if (!pkg) return triggerNotification('error', 'Node specifications not located in registry.');
+
+        if (currentUser.balance < pkg.price) {
+          return triggerNotification('error', `Insufficient node balances. Required: ${pkg.price} USDT. Balance: ${currentUser.balance} USDT.`);
+        }
+
+        if (confirm(`Confirm activation protocol for ${pkg.name}? This will lock in ${pkg.price} USDT asset nodes.`)) {
+          try {
+            currentUser.balance = parseFloat((currentUser.balance - pkg.price).toFixed(2));
+            
+            currentUser.activePackages = currentUser.activePackages || [];
+            currentUser.activePackages.push({
+              packageId: pkg.id,
+              name: pkg.name,
+              price: pkg.price,
+              dailyIncome: pkg.dailyIncome,
+              validity: pkg.validity,
+              purchasedAt: new Date().toISOString(),
+              lastTaskCompleted: ""
+            });
+
+            // Give referral commission payouts to parents immediately
+            await processCommissionPayouts(currentUser, pkg.price);
+
+            // Sync Database
+            await syncUserData(currentUser);
+
+            triggerNotification('success', `${pkg.name} Node linked and activated on Nexora secure grid!`);
+            
+            terminalLogs.push(`REGISTRY: Link protocol established. Activated VIP target Node ${pkg.name}.`);
+            renderTerminalLogs();
+
+            updateDashboardBalanceDisplays();
+            renderPackagesList();
+          } catch(e) {
+            triggerNotification('error', e.message || 'Node connection handshake failed.');
+          }
+        }
+      };
+
+      // Helper DB synchronization module
+      async function syncUserData(user) {
+        if (isDemoMode || !auth || !db) {
+          const users = getDemoUsers();
+          const idx = users.findIndex(u => u.phoneNumber === user.phoneNumber && u.countryCode === user.countryCode);
+          if (idx !== -1) {
+            users[idx] = user;
+            saveDemoUsers(users);
+          }
+          return;
+        } else {
+          const query = await db.collection('users')
+            .where('countryCode', '==', user.countryCode)
+            .where('phoneNumber', '==', user.phoneNumber)
+            .get();
+          if (!query.empty) {
+            await db.collection('users').doc(query.docs[0].id).set(user);
+          }
+        }
+      }
+
+      // Compute direct commission rules
+      async function processCommissionPayouts(buyer, price) {
+        const config = getSystemConfig();
+        const commRates = [
+          config.referCommissionLevelA || 10,
+          config.referCommissionLevelB || 3,
+          config.referCommissionLevelC || 2
+        ];
+
+        let parentCode = buyer.referCode;
+        let tierIndex = 0;
+
+        while (parentCode && tierIndex < 3) {
+          let parentUser = null;
+          let docId = null;
+
+          if (isDemoMode || !auth || !db) {
+            const users = getDemoUsers();
+            parentUser = users.find(u => u.myReferCode === parentCode);
+          } else {
+            const snap = await db.collection('users').where('myReferCode', '==', parentCode).get();
+            if (!snap.empty) {
+              parentUser = snap.docs[0].data();
+              docId = snap.docs[0].id;
+            }
+          }
+
+          if (parentUser) {
+            const payout = parseFloat((price * (commRates[tierIndex] / 100)).toFixed(2));
+            parentUser.balance = parseFloat((parentUser.balance + payout).toFixed(2));
+            parentUser.totalIncome = parseFloat((parentUser.totalIncome + payout).toFixed(2));
+            
+            parentUser.incomeRecords = parentUser.incomeRecords || [];
+            parentUser.incomeRecords.unshift({
+              amount: payout,
+              packageName: `Comms Level ${String.fromCharCode(65 + tierIndex)} Bonus (${buyer.name})`,
+              timestamp: new Date().toISOString()
+            });
+
+            if (isDemoMode || !auth || !db) {
+              const users = getDemoUsers();
+              const idx = users.findIndex(u => u.myReferCode === parentCode);
+              if (idx !== -1) {
+                users[idx] = parentUser;
+                saveDemoUsers(users);
+              }
+            } else if (docId) {
+              await db.collection('users').doc(docId).set(parentUser);
+            }
+
+            terminalLogs.push(`COMMISSION: Distributed tier reward +${payout} USDT to anchor ${parentUser.name}.`);
+            parentCode = parentUser.referCode;
+          } else {
+            break;
+          }
+          tierIndex++;
+        }
+      }
+
+      // Sync and print wallet outputs
+      function updateDashboardBalanceDisplays() {
+        if (!currentUser) return;
+        document.getElementById('dash-balance-display').innerText = `$${currentUser.balance.toFixed(2)}`;
+        document.getElementById('dash-income-display').innerText = `$${currentUser.totalIncome.toFixed(2)}`;
+      }
+
+      // Inner tabs navigation mapping
+      window.switchSubTab = function(tab) {
+        const btns = document.querySelectorAll('.sub-tab-btn');
+        btns.forEach(btn => {
+          const tabName = btn.getAttribute('data-sub-tab');
+          if (tabName === tab) {
+            btn.className = "sub-tab-btn px-5 py-4 shrink-0 transition-all duration-300 text-purple-400 border-b-2 border-purple-500 bg-white/[0.02]";
+          } else {
+            btn.className = "sub-tab-btn px-5 py-4 shrink-0 transition-all duration-300 text-white/50 border-b-2 border-transparent hover:text-white";
+          }
+        });
+
+        // Hide and show sections
+        document.getElementById('tab-packages-content').classList.add('hidden');
+        document.getElementById('tab-tasks-content').classList.add('hidden');
+        document.getElementById('tab-team-content').classList.add('hidden');
+        document.getElementById('tab-profile-content').classList.add('hidden');
+
+        if (tab === 'packages') {
+          document.getElementById('tab-packages-content').classList.remove('hidden');
+          renderPackagesList();
+        } else if (tab === 'tasks') {
+          document.getElementById('tab-tasks-content').classList.remove('hidden');
+          renderActivePackagesTasks();
+        } else if (tab === 'team') {
+          document.getElementById('tab-team-content').classList.remove('hidden');
+          loadTeamTab();
+        } else if (tab === 'profile') {
+          document.getElementById('tab-profile-content').classList.remove('hidden');
+          loadProfileTab();
+        }
+      };
+
+      // Set up tabs click triggers manually
+      document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+        const tab = btn.getAttribute('data-sub-tab');
+        btn.addEventListener('click', () => switchSubTab(tab));
+      });
+
+      // --- NETWORK REVIEWS SYSTEM (LOAD TEAM SYSTEM) ---
+      let teamActiveLevel = 'A';
+      function loadTeamTab() {
+        if (!currentUser) return;
+        
+        // Show referral URL
+        const currentURL = window.location.origin + window.location.pathname;
+        dashReferralUrlInput.value = `${currentURL}?ref=${currentUser.myReferCode}`;
+
+        // Print Levels counts and lists
+        queryAndRenderTeam();
+      }
+
+      async function queryAndRenderTeam() {
+        const config = getSystemConfig();
+        
+        // Populate rates UI
+        document.getElementById('comm-alpha-val').innerText = `${config.referCommissionLevelA || 10}%`;
+        document.getElementById('comm-beta-val').innerText = `${config.referCommissionLevelB || 3}%`;
+        document.getElementById('comm-gamma-val').innerText = `${config.referCommissionLevelC || 2}%`;
+
+        let listA = [];
+        let listB = [];
+        let listC = [];
+
+        // 1. Level A (Direct kids of current user)
+        let allUsers = [];
+        if (isDemoMode || !auth || !db) {
+          allUsers = getDemoUsers();
+        } else {
+          const snap = await db.collection('users').get();
+          allUsers = snap.docs.map(doc => doc.data());
+        }
+
+        listA = allUsers.filter(u => u.referCode === currentUser.myReferCode);
+
+        // 2. Level B (Indirect kid coordinates)
+        const codeAsListA = listA.map(u => u.myReferCode);
+        if (codeAsListA.length > 0) {
+          listB = allUsers.filter(u => codeAsListA.includes(u.referCode));
+        }
+
+        // 3. Level C (Indirect tertiary kids)
+        const codeAsListB = listB.map(u => u.myReferCode);
+        if (codeAsListB.length > 0) {
+          listC = allUsers.filter(u => codeAsListB.includes(u.referCode));
+        }
+
+        // Print badges
+        document.getElementById('level-a-count').innerText = listA.length;
+        document.getElementById('level-b-count').innerText = listB.length;
+        document.getElementById('level-c-count').innerText = listC.length;
+
+        const targetList = teamActiveLevel === 'A' ? listA : (teamActiveLevel === 'B' ? listB : listC);
+        const container = document.getElementById('team-members-list');
+
+        if (targetList.length === 0) {
+          container.innerHTML = `<p class="text-center py-10 text-blue-300/30 text-[10px] uppercase tracking-widest font-bold">No nodes registered in this tier</p>`;
+        } else {
+          container.innerHTML = targetList.map(u => `
+            <div class="bg-white/[0.02] border border-white/5 px-3 py-2 rounded-xl flex justify-between items-center text-[11px]">
+              <div>
+                <p class="font-bold text-white">${escapeHtml(u.name)}</p>
+                <p class="text-[9px] text-blue-300/40 font-semibold font-mono">${u.countryCode} ${u.phoneNumber.substring(0,3)}****${u.phoneNumber.substring(u.phoneNumber.length - 3)}</p>
+              </div>
+              <p class="text-[10px] font-mono text-blue-300/60">${new Date(u.timestamp).toLocaleDateString()}</p>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Team level tabs mapping
+      document.getElementById('level-a-tab').addEventListener('click', () => {
+        teamActiveLevel = 'A';
+        updateTeamTabsStyle();
+        queryAndRenderTeam();
+      });
+      document.getElementById('level-b-tab').addEventListener('click', () => {
+        teamActiveLevel = 'B';
+        updateTeamTabsStyle();
+        queryAndRenderTeam();
+      });
+      document.getElementById('level-c-tab').addEventListener('click', () => {
+        teamActiveLevel = 'C';
+        updateTeamTabsStyle();
+        queryAndRenderTeam();
+      });
+
+      function updateTeamTabsStyle() {
+        const tabs = [
+          { id: 'level-a-tab', key: 'A' },
+          { id: 'level-b-tab', key: 'B' },
+          { id: 'level-c-tab', key: 'C' }
+        ];
+        tabs.forEach(t => {
+          const el = document.getElementById(t.id);
+          if (teamActiveLevel === t.key) {
+            el.className = "flex-1 py-2 rounded-lg bg-white/5 text-purple-400 cursor-pointer text-[10px] font-bold uppercase tracking-widest";
+          } else {
+            el.className = "flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-lg text-white/40 hover:text-white transition-all cursor-pointer";
+          }
+        });
+      }
+
+      // --- VAULT LEDGER (RECHARGES, BANKING & WITHDRAWALS) ---
+      function loadProfileTab() {
+        if (!currentUser) return;
+        
+        // Populate inputs
+        document.getElementById('bank-usdt').value = currentUser.bankCard?.usdtAddress || '';
+        document.getElementById('bank-bkash').value = currentUser.bankCard?.bkashNumber || '';
+        document.getElementById('bank-nagad').value = currentUser.bankCard?.nagadNumber || '';
+        
+        // Disabled edits if locked
+        const lockState = currentUser.bankCard?.locked || false;
+        document.getElementById('bank-usdt').disabled = lockState;
+        document.getElementById('bank-bkash').disabled = lockState;
+        document.getElementById('bank-nagad').disabled = lockState;
+
+        const saveBankBtn = document.getElementById('save-bank-btn');
+        if (lockState) {
+          saveBankBtn.innerHTML = `<i data-lucide="lock" class="w-3.5 h-3.5"></i><span>Vault Status: Locked</span>`;
+          saveBankBtn.disabled = true;
+          saveBankBtn.className = "w-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest select-none cursor-not-allowed flex items-center justify-center gap-1";
+        } else {
+          saveBankBtn.innerHTML = `<i data-lucide="save" class="w-3.5 h-3.5"></i><span>Securely Lock Vault</span>`;
+          saveBankBtn.disabled = false;
+          saveBankBtn.className = "w-full bg-purple-600 hover:bg-purple-500 transition-colors py-2 rounded-xl text-[9px] font-black uppercase tracking-widest select-none cursor-pointer flex items-center justify-center gap-1 text-white";
+        }
+
+        updateRechargeDisplay();
+        updateWithdrawalDisplay();
+        renderProfileRecords();
+        lucide.createIcons();
+      }
+
+      // Save locked bank details
+      document.getElementById('save-bank-btn').addEventListener('click', () => {
+        if (currentUser.bankCard?.locked) return;
+        
+        const usdt = document.getElementById('bank-usdt').value.trim();
+        const bkash = document.getElementById('bank-bkash').value.trim();
+        const nagad = document.getElementById('bank-nagad').value.trim();
+
+        if (!usdt && !bkash && !nagad) {
+          return triggerNotification('error', 'Provide at least one financial endpoint parameter.');
+        }
+
+        if (confirm('Deploy and secure these financial endpoints? Once initialized, updates require manual clearing.')) {
+          currentUser.bankCard = {
+            usdtAddress: usdt,
+            bkashNumber: bkash,
+            nagadNumber: nagad,
+            locked: true
+          };
+
+          syncUserData(currentUser);
+          triggerNotification('success', 'Operational financial vault deployed and secured.');
+          loadProfileTab();
+        }
+      });
+
+      // Submit Recharge transaction request
+      document.getElementById('submit-recharge-btn').addEventListener('click', () => {
+        const type = document.getElementById('recharge-type').value;
+        const amount = parseFloat(document.getElementById('recharge-amount').value);
+        const txid = document.getElementById('recharge-txid').value.trim();
+
+        if (isNaN(amount) || amount < 10) {
+          return triggerNotification('error', 'Minimum deposit threshold is 10 USDT.');
+        }
+        if (!txid) {
+          return triggerNotification('error', 'Please provide a valid TXID or Transaction Serial reference.');
+        }
+
+        // Check duplicates recharges
+        currentUser.rechargeRecords = currentUser.rechargeRecords || [];
+        if (currentUser.rechargeRecords.some(r => r.txid === txid)) {
+          return triggerNotification('error', 'This TXID reference hash has already been logged.');
+        }
+
+        const newRecord = {
+          id: 'RC' + Math.floor(10000 + Math.random() * 90000),
+          type,
+          amount,
+          txid,
+          status: 'pending',
+          timestamp: new Date().toISOString()
+        };
+
+        currentUser.rechargeRecords.unshift(newRecord);
+        syncUserData(currentUser);
+
+        triggerNotification('success', 'Deposit ledger submitted. Awaiting root gateway audit.');
+        
+        // Reset fields
+        document.getElementById('recharge-amount').value = '';
+        document.getElementById('recharge-txid').value = '';
+
+        loadProfileTab();
+      });
+
+      // Submit Withdrawal request
+      document.getElementById('submit-withdraw-btn').addEventListener('click', () => {
+        if (!currentUser.bankCard?.locked) {
+          return triggerNotification('error', 'Please lock your Financial Vault addresses above before withdrawing.');
+        }
+
+        const type = document.getElementById('withdraw-type').value;
+        const amount = parseFloat(document.getElementById('withdraw-amount').value);
+
+        if (isNaN(amount) || amount < 5) {
+          return triggerNotification('error', 'Minimum withdrawal protocol requires 5 USDT.');
+        }
+
+        if (currentUser.balance < amount) {
+          return triggerNotification('error', 'Balance threshold too low to support this operation.');
+        }
+
+        // Check if there is already active target locked parameters
+        if (type === 'USDT' && !currentUser.bankCard.usdtAddress) return triggerNotification('error', 'No TRC-20 USDT destination parameter linked in vault.');
+        if (type === 'bKash' && !currentUser.bankCard.bkashNumber) return triggerNotification('error', 'No bKash endpoint destination parameter linked in vault.');
+        if (type === 'Nagad' && !currentUser.bankCard.nagadNumber) return triggerNotification('error', 'No Nagad endpoint destination parameter linked in vault.');
+
+        const fee = parseFloat((amount * 0.05).toFixed(2));
+        const finalPayout = parseFloat((amount - fee).toFixed(2));
+
+        if (confirm(`Authorize withdrawal of ${amount} USDT? A fee of ${fee} USDT (5%) applies. Net payout: ${finalPayout} USDT.`)) {
+          currentUser.balance = parseFloat((currentUser.balance - amount).toFixed(2));
+
+          currentUser.withdrawalRecords = currentUser.withdrawalRecords || [];
+          currentUser.withdrawalRecords.unshift({
+            id: 'WD' + Math.floor(10000 + Math.random() * 90000),
+            type,
+            amount,
+            payout: finalPayout,
+            status: 'pending',
+            timestamp: new Date().toISOString()
+          });
+
+          syncUserData(currentUser);
+          triggerNotification('success', 'Withdrawal handshake initialized. Transfer pipeline active.');
+          updateDashboardBalanceDisplays();
+          
+          document.getElementById('withdraw-amount').value = '';
+          loadProfileTab();
+        }
+      });
+
+      // Claim gift promo keys
+      document.getElementById('redeem-gift-btn').addEventListener('click', () => {
+        const inputCode = document.getElementById('gift-code-input').value.trim().toUpperCase();
+        if (!inputCode) return triggerNotification('error', 'Please input a security coupon code.');
+
+        const config = getSystemConfig();
+        const giftIdx = config.giftCodes.findIndex(g => g.code === inputCode);
+
+        if (giftIdx === -1) {
+          return triggerNotification('error', 'Coupons specifications not found in Nexora database.');
+        }
+
+        const gift = config.giftCodes[giftIdx];
+        gift.redeemedBy = gift.redeemedBy || [];
+
+        if (gift.redeemedBy.includes(currentUser.email)) {
+          return triggerNotification('error', 'Key coordinates already validated for this operator ID.');
+        }
+
+        if (gift.usesCount >= gift.maxUses) {
+          return triggerNotification('error', 'Voucher expiration triggered. Key uses exhausted.');
+        }
+
+        // Apply bonus yields
+        currentUser.balance = parseFloat((currentUser.balance + gift.amount).toFixed(2));
+        currentUser.totalIncome = parseFloat((currentUser.totalIncome + gift.amount).toFixed(2));
+
+        currentUser.incomeRecords = currentUser.incomeRecords || [];
+        currentUser.incomeRecords.unshift({
+          amount: gift.amount,
+          packageName: `Platform Promotional Key: ${gift.code}`,
+          timestamp: new Date().toISOString()
+        });
+
+        // Update uses counts on local config
+        gift.usesCount++;
+        gift.redeemedBy.push(currentUser.email);
+        config.giftCodes[giftIdx] = gift;
+        
+        saveSystemConfig(config);
+        syncUserData(currentUser);
+
+        triggerNotification('success', `Security promo validated! +${gift.amount} USDT credit initialized.`);
+        document.getElementById('gift-code-input').value = '';
+        
+        updateDashboardBalanceDisplays();
+        loadProfileTab();
+      });
+
+      // History log arrays builder
+      function renderProfileRecords() {
+        const rechargeList = document.getElementById('profile-recharge-list');
+        const withdrawList = document.getElementById('profile-withdrawal-list');
+
+        const recharges = currentUser.rechargeRecords || [];
+        const withdrawals = currentUser.withdrawalRecords || [];
+
+        document.getElementById('recharge-count-badge').innerText = recharges.length;
+        document.getElementById('withdrawal-count-badge').innerText = withdrawals.length;
+
+        if (recharges.length === 0) {
+          rechargeList.innerHTML = `<p class="text-center py-8 text-blue-300/20 uppercase tracking-widest text-[8px]">No ledger logs</p>`;
+        } else {
+          rechargeList.innerHTML = recharges.map(r => `
+            <div class="bg-white/[0.02] border border-white/5 p-2 rounded-xl flex justify-between items-center text-[10px]">
+              <div>
+                <span class="text-white font-bold">$${r.amount.toFixed(2)}</span>
+                <span class="text-blue-300/40 ml-1">(${r.type})</span>
+                <p class="text-[8px] text-blue-300/30 font-mono break-all mt-0.5">${escapeHtml(r.txid)}</p>
+              </div>
+              <span class="px-1.5 py-0.2 rounded text-[8px] uppercase tracking-wide font-bold ${
+                r.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                (r.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20')
+              }">${r.status}</span>
+            </div>
+          `).join('');
+        }
+
+        if (withdrawals.length === 0) {
+          withdrawList.innerHTML = `<p class="text-center py-8 text-blue-300/20 uppercase tracking-widest text-[8px]">No ledger logs</p>`;
+        } else {
+          withdrawList.innerHTML = withdrawals.map(w => `
+            <div class="bg-white/[0.02] border border-white/5 p-2 rounded-xl flex justify-between items-center text-[10px]">
+              <div>
+                <span class="text-white font-bold">$${w.amount.toFixed(2)}</span>
+                <span class="text-blue-300/40 ml-1">(${w.type})</span>
+                <p class="text-[8px] text-blue-300/30 mt-0.5">Payout: $${w.payout.toFixed(2)}</p>
+              </div>
+              <span class="px-1.5 py-0.2 rounded text-[8px] uppercase tracking-wide font-bold ${
+                w.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                (w.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20')
+              }">${w.status}</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Dynamic Display helpers for Recharges options
+      function updateRechargeDisplay() {
+        const type = document.getElementById('recharge-type').value;
+        const targetLabel = document.getElementById('recharge-method-label');
+        const targetAddress = document.getElementById('recharge-target-address');
+        const rateDisclaimer = document.getElementById('recharge-rate-disclaimer');
+        const txInfoLabel = document.getElementById('tx-info-label');
+        const rechargeAmountInput = document.getElementById('recharge-amount');
+
+        const config = getSystemConfig();
+
+        if (type === 'USDT') {
+          targetLabel.innerText = 'Target USDT Address (TRC-20):';
+          targetAddress.innerText = config.usdtRechargeAddress || '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+          rateDisclaimer.classList.add('hidden');
+          txInfoLabel.innerText = 'USDT Blockchain Tx Hash (TXID)';
+        } else if (type === 'bKash') {
+          targetLabel.innerText = 'Target bKash Number (Agent/Personal):';
+          targetAddress.innerText = config.bkashRechargeNumber || '01711223344';
+          rateDisclaimer.classList.remove('hidden');
+          txInfoLabel.innerText = 'Sender Mobile Number / Transaction ID';
+        } else if (type === 'Nagad') {
+          targetLabel.innerText = 'Target Nagad Number (Agent/Personal):';
+          targetAddress.innerText = config.nagadRechargeNumber || '01911223344';
+          rateDisclaimer.classList.remove('hidden');
+          txInfoLabel.innerText = 'Sender Mobile Number / Transaction ID';
+        }
+      }
+
+      document.getElementById('recharge-type').addEventListener('change', updateRechargeDisplay);
+
+      // Copy recharge wallet helper
+      document.getElementById('copy-recharge-target-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        const address = document.getElementById('recharge-target-address').innerText;
+        navigator.clipboard.writeText(address).then(() => {
+          triggerNotification('success', 'Deposit receiver credentials copied!');
+        });
+      });
+
+      // Dynamic Display helpers for Withdrawals
+      function updateWithdrawalDisplay() {
+        const type = document.getElementById('withdraw-type').value;
+        const feeDisclaimer = document.getElementById('withdraw-fee-disclaimer');
+        if (type === 'USDT') {
+          feeDisclaimer.innerText = 'Withdrawal Fee: 5%. Calculated yield will route to your locked USDT address.';
+        } else {
+          feeDisclaimer.innerText = `Withdrawal Fee: 5%. Calculated yield will route to your locked ${type} mobile number. Conversion Rate: 1 USDT = 120 BDT.`;
+        }
+      }
+
+      document.getElementById('withdraw-type').addEventListener('change', updateWithdrawalDisplay);
+
+      // --- INITIAL LOAD RENDERS (SHOW DASHBOARD VIEW IF USER CACHE IS ACTIVE) ---
+      function showDashboard(user) {
+        authPortalCard.classList.add('hidden');
+        brandHeader.classList.add('hidden');
+        securedDashboardCard.classList.remove('hidden');
+
+        document.getElementById('dash-operator-name').innerText = user.name;
+        document.getElementById('dash-operator-phone').innerText = `NODE COORDINATES: ${user.countryCode} ${user.phoneNumber}`;
+
+        // Seed logs
+        terminalLogs = [
+          `SESSION INIT: Operator ${currentUser.name} online.`,
+          `CLEARANCE LEVEL: Operator (Standard)`,
+          `HANDSHAKE PROTOCOL: Success`,
+          `LOCAL SECTOR STABILITY: Optimal`,
+          `DATABASE LINKED: ${isDemoMode ? 'Local Cache LocalStorage' : 'Live Cloud Firestore'}`
+        ];
+        renderTerminalLogs();
+
+        // Update database indicator label
+        const dbStatusEl = document.getElementById('dash-db-status');
+        if (isDemoMode) {
+          dbStatusEl.innerText = 'Demo Cache';
+          dbStatusEl.className = 'text-xs font-bold text-white uppercase tracking-wider';
+        } else {
+          dbStatusEl.innerText = 'Live Firestore';
+          dbStatusEl.className = 'text-xs font-bold text-emerald-400 uppercase tracking-wider animate-pulse';
+        }
+
+        // Load and sync sub panels
+        updateDashboardBalanceDisplays();
+        switchSubTab('packages');
+      }
+
+      // Initialize App immediately since script is at the end of the body
+      initElements();
+      initCountryDropdowns();
+      detectUrlReferCode();
+      lucide.createIcons();
+    </script>
+    <script>
+  // Country Codes List
+  const countryCodes = [
+    { code: '+880', name: 'BD' }, { code: '+1', name: 'US' }, { code: '+91', name: 'IN' },
+    { code: '+44', name: 'UK' }, { code: '+971', name: 'AE' }, { code: '+966', name: 'SA' }
+  ];
+
+  // FIX: Wait for DOM to load before adding events
+  document.addEventListener('DOMContentLoaded', () => {
+    // Fill Country Codes
+    const options = countryCodes.map(c => `<option value="${c.code}">${c.code} ${c.name}</option>`).join('');
+    document.getElementById('login-country-code').innerHTML = options;
+    document.getElementById('register-country-code').innerHTML = options;
+    document.getElementById('login-country-code').value = '+880';
+    document.getElementById('register-country-code').value = '+880';
+
+    // Tab Switch Logic
+    const loginTab = document.getElementById('login-tab-btn');
+    const registerTab = document.getElementById('register-tab-btn');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    loginTab.addEventListener('click', () => {
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+      loginTab.className = "flex-1 py-5 text-xs font-bold uppercase bg-white/5 text-purple-400 border-b-2 border-purple-500";
+      registerTab.className = "flex-1 py-5 text-xs font-bold uppercase border-l border-white/10 opacity-40 hover:opacity-100 text-white font-semibold";
+    });
+
+    registerTab.addEventListener('click', () => {
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+      registerTab.className = "flex-1 py-5 text-xs font-bold uppercase bg-white/5 text-purple-400 border-b-2 border-purple-500";
+      loginTab.className = "flex-1 py-5 text-xs font-bold uppercase border-l border-white/10 opacity-40 hover:opacity-100 text-white font-semibold";
+    });
+
+    lucide.createIcons();
+  });
+</script>
+</body>
+</html>
+          
